@@ -452,14 +452,42 @@ class TravelPlanner {
     clearAllData() {
         if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
             this.trips = [];
+            this.packingLists = [];
+            this.documents = [];
             this.settings = this.getDefaultSettings();
             this.saveTrips();
+            this.savePackingLists();
+            this.saveDocuments();
             this.saveSettings();
             this.updateDashboard();
             this.updateTripsDisplay();
+            this.updatePackingListsDisplay();
+            this.updateDocumentsDisplay();
             this.updateBudgetDisplay();
+            this.updateCalendarDisplay();
             this.showNotification('All data cleared successfully!', 'success');
         }
+    }
+
+    loadSampleData() {
+        this.trips = this.getSampleTrips();
+        this.packingLists = this.getSamplePackingLists();
+        this.documents = this.getSampleDocuments();
+        this.settings = this.getDefaultSettings();
+        
+        this.saveTrips();
+        this.savePackingLists();
+        this.saveDocuments();
+        this.saveSettings();
+        
+        this.updateDashboard();
+        this.updateTripsDisplay();
+        this.updatePackingListsDisplay();
+        this.updateDocumentsDisplay();
+        this.updateBudgetDisplay();
+        this.updateCalendarDisplay();
+        
+        this.showNotification('Sample data loaded successfully!', 'success');
     }
 
     // Utility Functions
@@ -587,11 +615,71 @@ class TravelPlanner {
     loadTrips() {
         try {
             const trips = localStorage.getItem('travelPlannerTrips');
-            return trips ? JSON.parse(trips) : [];
+            if (trips) {
+                return JSON.parse(trips);
+            } else {
+                // Load sample data if no trips exist
+                return this.getSampleTrips();
+            }
         } catch (error) {
             console.error('Error loading trips:', error);
-            return [];
+            return this.getSampleTrips();
         }
+    }
+
+    getSampleTrips() {
+        return [
+            {
+                id: 'trip_1',
+                name: 'Summer Europe Adventure',
+                destination: 'Paris, France',
+                type: 'Leisure',
+                startDate: '2024-06-15',
+                endDate: '2024-06-25',
+                budget: 3500.00,
+                notes: 'First time visiting Europe! Excited to see the Eiffel Tower and try authentic French cuisine.',
+                expenses: [
+                    { id: 'exp_1', description: 'Flight to Paris', amount: 850.00, category: 'Transportation', date: '2024-06-15' },
+                    { id: 'exp_2', description: 'Hotel booking', amount: 1200.00, category: 'Accommodation', date: '2024-06-15' },
+                    { id: 'exp_3', description: 'Eiffel Tower tickets', amount: 45.00, category: 'Activities', date: '2024-06-16' },
+                    { id: 'exp_4', description: 'Louvre Museum', amount: 25.00, category: 'Activities', date: '2024-06-17' },
+                    { id: 'exp_5', description: 'French dinner', amount: 85.00, category: 'Food', date: '2024-06-18' }
+                ],
+                createdAt: '2024-05-01T10:00:00Z'
+            },
+            {
+                id: 'trip_2',
+                name: 'Business Conference NYC',
+                destination: 'New York, USA',
+                type: 'Business',
+                startDate: '2024-07-10',
+                endDate: '2024-07-12',
+                budget: 2000.00,
+                notes: 'Tech conference at Javits Center. Need to network and attend key sessions.',
+                expenses: [
+                    { id: 'exp_6', description: 'Conference registration', amount: 450.00, category: 'Business', date: '2024-07-10' },
+                    { id: 'exp_7', description: 'Hotel near Javits', amount: 600.00, category: 'Accommodation', date: '2024-07-10' },
+                    { id: 'exp_8', description: 'Uber rides', amount: 120.00, category: 'Transportation', date: '2024-07-11' }
+                ],
+                createdAt: '2024-06-15T14:30:00Z'
+            },
+            {
+                id: 'trip_3',
+                name: 'Beach Getaway Miami',
+                destination: 'Miami, Florida',
+                type: 'Leisure',
+                startDate: '2024-08-20',
+                endDate: '2024-08-25',
+                budget: 1800.00,
+                notes: 'Relaxing beach vacation with friends. Looking forward to South Beach and Cuban food!',
+                expenses: [
+                    { id: 'exp_9', description: 'Flight to Miami', amount: 320.00, category: 'Transportation', date: '2024-08-20' },
+                    { id: 'exp_10', description: 'Airbnb rental', amount: 800.00, category: 'Accommodation', date: '2024-08-20' },
+                    { id: 'exp_11', description: 'Beach equipment', amount: 75.00, category: 'Activities', date: '2024-08-21' }
+                ],
+                createdAt: '2024-07-01T09:15:00Z'
+            }
+        ];
     }
 
     saveTrips() {
@@ -631,11 +719,68 @@ class TravelPlanner {
     loadPackingLists() {
         try {
             const lists = localStorage.getItem('travelPlannerPackingLists');
-            return lists ? JSON.parse(lists) : [];
+            if (lists) {
+                return JSON.parse(lists);
+            } else {
+                // Load sample data if no packing lists exist
+                return this.getSamplePackingLists();
+            }
         } catch (error) {
             console.error('Error loading packing lists:', error);
-            return [];
+            return this.getSamplePackingLists();
         }
+    }
+
+    getSamplePackingLists() {
+        return [
+            {
+                id: 'pack_1',
+                name: 'Summer Europe Trip',
+                tripId: 'trip_1',
+                categories: ['Clothes', 'Electronics', 'Toiletries', 'Documents'],
+                items: [
+                    { id: 'item_1', name: 'Passport', packed: true },
+                    { id: 'item_2', name: 'Travel adapter', packed: true },
+                    { id: 'item_3', name: 'Summer dresses (3)', packed: false },
+                    { id: 'item_4', name: 'Comfortable walking shoes', packed: true },
+                    { id: 'item_5', name: 'Camera and charger', packed: false },
+                    { id: 'item_6', name: 'Toothbrush and toothpaste', packed: true },
+                    { id: 'item_7', name: 'Sunscreen SPF 50', packed: false },
+                    { id: 'item_8', name: 'Travel insurance documents', packed: true }
+                ],
+                createdAt: '2024-05-15T10:30:00Z'
+            },
+            {
+                id: 'pack_2',
+                name: 'Business Conference Pack',
+                tripId: 'trip_2',
+                categories: ['Business Attire', 'Electronics', 'Documents'],
+                items: [
+                    { id: 'item_9', name: 'Business suits (2)', packed: true },
+                    { id: 'item_10', name: 'Laptop and charger', packed: true },
+                    { id: 'item_11', name: 'Business cards', packed: true },
+                    { id: 'item_12', name: 'Conference badge', packed: false },
+                    { id: 'item_13', name: 'Notebook and pens', packed: true },
+                    { id: 'item_14', name: 'Dress shoes', packed: true }
+                ],
+                createdAt: '2024-06-20T16:45:00Z'
+            },
+            {
+                id: 'pack_3',
+                name: 'Beach Vacation Essentials',
+                tripId: 'trip_3',
+                categories: ['Beach Gear', 'Summer Clothes', 'Sunscreen'],
+                items: [
+                    { id: 'item_15', name: 'Swimsuits (2)', packed: false },
+                    { id: 'item_16', name: 'Beach towels', packed: false },
+                    { id: 'item_17', name: 'Sunglasses', packed: true },
+                    { id: 'item_18', name: 'Flip flops', packed: false },
+                    { id: 'item_19', name: 'Beach hat', packed: false },
+                    { id: 'item_20', name: 'Waterproof phone case', packed: true }
+                ],
+                createdAt: '2024-07-10T12:00:00Z'
+            }
+        ];
     }
 
     savePackingLists() {
@@ -648,21 +793,37 @@ class TravelPlanner {
 
     createPackingList(event) {
         event.preventDefault();
-        const formData = new FormData(event.target);
-        const packingList = {
-            id: this.generateId(),
-            name: document.getElementById('packing-list-name').value,
-            tripId: document.getElementById('packing-trip').value,
-            categories: document.getElementById('packing-categories').value.split(',').map(c => c.trim()),
-            items: [],
-            createdAt: new Date().toISOString()
-        };
+        
+        if (this.editingPackingListId) {
+            // Update existing packing list
+            const listIndex = this.packingLists.findIndex(l => l.id === this.editingPackingListId);
+            if (listIndex !== -1) {
+                this.packingLists[listIndex] = {
+                    ...this.packingLists[listIndex],
+                    name: document.getElementById('packing-list-name').value,
+                    tripId: document.getElementById('packing-trip').value,
+                    categories: document.getElementById('packing-categories').value.split(',').map(c => c.trim()).filter(c => c)
+                };
+                this.showNotification('Packing list updated successfully!', 'success');
+            }
+            this.editingPackingListId = null;
+        } else {
+            // Create new packing list
+            const packingList = {
+                id: this.generateId(),
+                name: document.getElementById('packing-list-name').value,
+                tripId: document.getElementById('packing-trip').value,
+                categories: document.getElementById('packing-categories').value.split(',').map(c => c.trim()).filter(c => c),
+                items: [],
+                createdAt: new Date().toISOString()
+            };
+            this.packingLists.push(packingList);
+            this.showNotification('Packing list created successfully!', 'success');
+        }
 
-        this.packingLists.push(packingList);
         this.savePackingLists();
         this.closeCreatePackingListModal();
         this.updatePackingListsDisplay();
-        this.showNotification('Packing list created successfully!', 'success');
     }
 
     updatePackingListsDisplay() {
@@ -720,11 +881,75 @@ class TravelPlanner {
     loadDocuments() {
         try {
             const docs = localStorage.getItem('travelPlannerDocuments');
-            return docs ? JSON.parse(docs) : [];
+            if (docs) {
+                return JSON.parse(docs);
+            } else {
+                // Load sample data if no documents exist
+                return this.getSampleDocuments();
+            }
         } catch (error) {
             console.error('Error loading documents:', error);
-            return [];
+            return this.getSampleDocuments();
         }
+    }
+
+    getSampleDocuments() {
+        return [
+            {
+                id: 'doc_1',
+                name: 'Passport',
+                type: 'Passport',
+                tripId: 'trip_1',
+                expiryDate: '2029-03-15',
+                notes: 'Valid for 5 more years. Make sure to check visa requirements for France.',
+                createdAt: '2024-05-01T08:00:00Z'
+            },
+            {
+                id: 'doc_2',
+                name: 'Travel Insurance Policy',
+                type: 'Insurance',
+                tripId: 'trip_1',
+                expiryDate: '2024-07-15',
+                notes: 'Covers medical emergencies and trip cancellation. Policy number: TI-2024-001234',
+                createdAt: '2024-05-02T10:30:00Z'
+            },
+            {
+                id: 'doc_3',
+                name: 'Hotel Booking Confirmation',
+                type: 'Accommodation',
+                tripId: 'trip_1',
+                expiryDate: null,
+                notes: 'Hotel Le Marais, Paris. Confirmation code: HM-2024-5678. Check-in: June 15, 2024',
+                createdAt: '2024-05-03T14:20:00Z'
+            },
+            {
+                id: 'doc_4',
+                name: 'Conference Registration',
+                type: 'Business',
+                tripId: 'trip_2',
+                expiryDate: null,
+                notes: 'TechConf 2024 at Javits Center. Badge pickup at registration desk.',
+                createdAt: '2024-06-01T09:15:00Z'
+            },
+            {
+                id: 'doc_5',
+                name: 'Driver\'s License',
+                type: 'ID',
+                tripId: 'trip_3',
+                expiryDate: '2026-12-31',
+                notes: 'Valid for car rental in Miami. International driving permit not required for US.',
+                createdAt: '2024-07-01T11:45:00Z'
+            },
+            {
+                id: 'doc_6',
+                name: 'Flight Booking',
+                type: 'Transportation',
+                tripId: 'trip_3',
+                expiryDate: null,
+                notes: 'American Airlines AA1234. Seat 12A. Check-in 24 hours before departure.',
+                createdAt: '2024-07-02T16:30:00Z'
+            }
+        ];
     }
 
     saveDocuments() {
@@ -737,21 +962,40 @@ class TravelPlanner {
 
     addDocument(event) {
         event.preventDefault();
-        const document = {
-            id: this.generateId(),
-            name: document.getElementById('document-name').value,
-            type: document.getElementById('document-type').value,
-            tripId: document.getElementById('document-trip').value || null,
-            expiryDate: document.getElementById('document-expiry').value,
-            notes: document.getElementById('document-notes').value,
-            createdAt: new Date().toISOString()
-        };
+        
+        if (this.editingDocumentId) {
+            // Update existing document
+            const docIndex = this.documents.findIndex(d => d.id === this.editingDocumentId);
+            if (docIndex !== -1) {
+                this.documents[docIndex] = {
+                    ...this.documents[docIndex],
+                    name: document.getElementById('document-name').value,
+                    type: document.getElementById('document-type').value,
+                    tripId: document.getElementById('document-trip').value || null,
+                    expiryDate: document.getElementById('document-expiry').value,
+                    notes: document.getElementById('document-notes').value
+                };
+                this.showNotification('Document updated successfully!', 'success');
+            }
+            this.editingDocumentId = null;
+        } else {
+            // Create new document
+            const newDocument = {
+                id: this.generateId(),
+                name: document.getElementById('document-name').value,
+                type: document.getElementById('document-type').value,
+                tripId: document.getElementById('document-trip').value || null,
+                expiryDate: document.getElementById('document-expiry').value,
+                notes: document.getElementById('document-notes').value,
+                createdAt: new Date().toISOString()
+            };
+            this.documents.push(newDocument);
+            this.showNotification('Document added successfully!', 'success');
+        }
 
-        this.documents.push(document);
         this.saveDocuments();
         this.closeAddDocumentModal();
         this.updateDocumentsDisplay();
-        this.showNotification('Document added successfully!', 'success');
     }
 
     updateDocumentsDisplay() {
@@ -960,6 +1204,89 @@ class TravelPlanner {
         document.body.style.overflow = 'auto';
     }
 
+    editPackingList(listId) {
+        const list = this.packingLists.find(l => l.id === listId);
+        if (list) {
+            document.getElementById('packing-list-name').value = list.name;
+            document.getElementById('packing-trip').value = list.tripId;
+            document.getElementById('packing-categories').value = list.categories.join(', ');
+            this.editingPackingListId = listId;
+            this.showCreatePackingListModal();
+        }
+    }
+
+    deletePackingList(listId) {
+        if (confirm('Are you sure you want to delete this packing list?')) {
+            this.packingLists = this.packingLists.filter(l => l.id !== listId);
+            this.savePackingLists();
+            this.updatePackingListsDisplay();
+        }
+    }
+
+    togglePackingItem(listId, itemId) {
+        const list = this.packingLists.find(l => l.id === listId);
+        if (list) {
+            const item = list.items.find(i => i.id === itemId);
+            if (item) {
+                item.packed = !item.packed;
+                this.savePackingLists();
+                this.updatePackingListsDisplay();
+            }
+        }
+    }
+
+    updatePackingItem(listId, itemId, newName) {
+        const list = this.packingLists.find(l => l.id === listId);
+        if (list) {
+            const item = list.items.find(i => i.id === itemId);
+            if (item) {
+                item.name = newName;
+                this.savePackingLists();
+            }
+        }
+    }
+
+    addPackingItem(event, listId) {
+        if (event.key === 'Enter') {
+            const input = event.target;
+            const itemName = input.value.trim();
+            if (itemName) {
+                const list = this.packingLists.find(l => l.id === listId);
+                if (list) {
+                    list.items.push({
+                        id: this.generateId(),
+                        name: itemName,
+                        packed: false
+                    });
+                    this.savePackingLists();
+                    this.updatePackingListsDisplay();
+                    input.value = '';
+                }
+            }
+        }
+    }
+
+    editDocument(docId) {
+        const doc = this.documents.find(d => d.id === docId);
+        if (doc) {
+            document.getElementById('document-name').value = doc.name;
+            document.getElementById('document-type').value = doc.type;
+            document.getElementById('document-trip').value = doc.tripId || '';
+            document.getElementById('document-expiry').value = doc.expiryDate || '';
+            document.getElementById('document-notes').value = doc.notes || '';
+            this.editingDocumentId = docId;
+            this.showAddDocumentModal();
+        }
+    }
+
+    deleteDocument(docId) {
+        if (confirm('Are you sure you want to delete this document?')) {
+            this.documents = this.documents.filter(d => d.id !== docId);
+            this.saveDocuments();
+            this.updateDocumentsDisplay();
+        }
+    }
+
     // PWA Management
     setupPWA() {
         this.deferredPrompt = null;
@@ -1166,6 +1493,19 @@ function exportData() {
 
 function clearAllData() {
     travelPlanner.clearAllData();
+}
+
+
+function closeCreatePackingListModal() {
+    travelPlanner.closeCreatePackingListModal();
+}
+
+function closeAddDocumentModal() {
+    travelPlanner.closeAddDocumentModal();
+}
+
+function closeWeatherModal() {
+    travelPlanner.closeWeatherModal();
 }
 
 // Initialize the application when DOM is loaded
