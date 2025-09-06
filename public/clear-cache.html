@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - Bradley's Travel Planner</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: #5a6fd8;
+            transform: translateY(-2px);
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Clear App Cache</h1>
+        <p>If you're still seeing the old app icon, this will help clear the cache and force the new icon to load.</p>
+        
+        <button class="btn" onclick="clearCache()">Clear Browser Cache</button>
+        <button class="btn" onclick="reloadApp()">Reload App</button>
+        <button class="btn" onclick="checkIcons()">Check New Icons</button>
+        
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+
+        async function clearCache() {
+            try {
+                // Clear service worker cache
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                        await registration.unregister();
+                    }
+                }
+                
+                // Clear browser cache
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                }
+                
+                showStatus('✅ Cache cleared successfully! Please refresh the page.', 'success');
+            } catch (error) {
+                showStatus('❌ Error clearing cache: ' + error.message, 'info');
+            }
+        }
+
+        function reloadApp() {
+            window.location.href = '/';
+        }
+
+        async function checkIcons() {
+            const iconUrls = [
+                '/icons/icon-144x144.png?v=3',
+                '/icons/icon-192x192.png?v=3',
+                '/icons/icon-512x512.png?v=3',
+                '/favicon.ico?v=3'
+            ];
+            
+            let allLoaded = true;
+            for (const url of iconUrls) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        allLoaded = false;
+                        break;
+                    }
+                } catch (error) {
+                    allLoaded = false;
+                    break;
+                }
+            }
+            
+            if (allLoaded) {
+                showStatus('✅ All new icons are accessible! The new icon should appear after cache refresh.', 'success');
+            } else {
+                showStatus('❌ Some icons are not accessible. Please check the deployment.', 'info');
+            }
+        }
+
+        // Auto-check icons on page load
+        window.addEventListener('load', checkIcons);
+    </script>
+</body>
+</html>

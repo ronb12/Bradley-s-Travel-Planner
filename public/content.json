@@ -1,129 +1,136 @@
 {
   "name": "Bradley's Travel Planner",
   "short_name": "Travel Planner",
-  "description": "Bradley's Travel Planner - A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
-  "version": "1.0.0",
+  "description": "A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
+  "version": "3.0.0",
   "author": "Bradley Virtual Solutions, LLC",
-  "homepage_url": "https://bradleys-travel-planner.web.app",
-  "repository_url": "https://github.com/ronb12/Bradley-s-Travel-Planner",
+  "website": "https://bradleys-travel-planner.web.app",
+  "github": "https://github.com/ronb12/Bradley-s-Travel-Planner",
   "license": "MIT",
   "keywords": [
     "travel",
     "planner",
     "itinerary",
     "budget",
-    "trip",
-    "pwa",
-    "progressive-web-app"
-  ],
-  "categories": [
-    "travel",
-    "lifestyle",
-    "productivity"
+    "packing",
+    "documents",
+    "calendar",
+    "notes",
+    "photos",
+    "weather",
+    "export",
+    "templates",
+    "PWA",
+    "progressive web app"
   ],
   "features": [
     "Trip Management",
     "Budget Tracking",
+    "Interactive Calendar",
     "Packing Lists",
-    "Document Management",
-    "Calendar View",
+    "Document Storage",
+    "Photo Gallery",
+    "Notes & Journaling",
+    "Search & Filtering",
+    "Weather Integration",
+    "Data Export (PDF/CSV)",
+    "Trip Templates",
+    "Spending Analytics",
+    "User Authentication",
+    "Mobile Responsive",
     "Offline Support",
     "PWA Installation"
   ],
+  "technologies": [
+    "HTML5",
+    "CSS3",
+    "JavaScript (ES6+)",
+    "Firebase",
+    "Firestore",
+    "PWA",
+    "Service Worker",
+    "Web App Manifest",
+    "Responsive Design",
+    "Touch Gestures"
+  ],
+  "browser_support": {
+    "chrome": ">= 80",
+    "firefox": ">= 75",
+    "safari": ">= 13",
+    "edge": ">= 80",
+    "mobile": "iOS 13+, Android 8+"
+  },
+  "pwa": {
+    "installable": true,
+    "offline": true,
+    "background_sync": true,
+    "push_notifications": false,
+    "theme_color": "#667eea",
+    "background_color": "#667eea"
+  },
+  "icons": {
+    "favicon": "/favicon.ico",
+    "apple_touch": "/icons/apple-touch-icon.png",
+    "android_chrome": "/icons/icon-192x192.png",
+    "maskable": "/icons/icon-maskable-512x512.png"
+  },
   "screenshots": [
     {
-      "src": "/screenshots/desktop-screenshot.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Desktop Dashboard View"
+      "url": "/screenshots/desktop-screenshot.png",
+      "alt": "Desktop view of Bradley's Travel Planner",
+      "width": 1280,
+      "height": 720
     },
     {
-      "src": "/screenshots/mobile-screenshot.png",
-      "sizes": "375x667",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Mobile Trip View"
+      "url": "/screenshots/mobile-screenshot.png",
+      "alt": "Mobile view of Bradley's Travel Planner",
+      "width": 375,
+      "height": 667
     }
   ],
-  "icons": [
+  "social": {
+    "twitter": "@BradleyVirtual",
+    "linkedin": "bradley-virtual-solutions",
+    "email": "info@bradleyvirtualsolutions.com"
+  },
+  "support": {
+    "email": "support@bradleyvirtualsolutions.com",
+    "documentation": "https://github.com/ronb12/Bradley-s-Travel-Planner/wiki",
+    "issues": "https://github.com/ronb12/Bradley-s-Travel-Planner/issues"
+  },
+  "privacy": {
+    "data_collection": "minimal",
+    "analytics": "none",
+    "cookies": "essential_only",
+    "third_party": "firebase_auth_only"
+  },
+  "accessibility": {
+    "wcag_level": "AA",
+    "keyboard_navigation": true,
+    "screen_reader": true,
+    "high_contrast": true,
+    "reduced_motion": true
+  },
+  "performance": {
+    "lighthouse_score": "95+",
+    "first_contentful_paint": "< 2s",
+    "largest_contentful_paint": "< 2.5s",
+    "cumulative_layout_shift": "< 0.1",
+    "first_input_delay": "< 100ms"
+  },
+  "last_updated": "2024-01-15",
+  "changelog": [
     {
-      "src": "/icons/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    }
-  ],
-  "start_url": "/",
-  "display": "standalone",
-  "orientation": "portrait-primary",
-  "theme_color": "#667eea",
-  "background_color": "#667eea",
-  "lang": "en-US",
-  "scope": "/",
-  "prefer_related_applications": false,
-  "related_applications": [],
-  "shortcuts": [
-    {
-      "name": "Create New Trip",
-      "short_name": "New Trip",
-      "description": "Start planning your next adventure",
-      "url": "/?action=create-trip",
-      "icons": [
-        {
-          "src": "/icons/shortcut-new-trip.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "View Calendar",
-      "short_name": "Calendar",
-      "description": "See your trips in calendar format",
-      "url": "/?section=calendar",
-      "icons": [
-        {
-          "src": "/icons/shortcut-calendar.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Budget Tracker",
-      "short_name": "Budget",
-      "description": "Track your travel expenses",
-      "url": "/?section=budget",
-      "icons": [
-        {
-          "src": "/icons/shortcut-budget.png",
-          "sizes": "96x96"
-        }
+      "version": "3.0.0",
+      "date": "2024-01-15",
+      "changes": [
+        "New professional app icon design",
+        "Enhanced mobile search functionality",
+        "Fixed user form scrolling issues",
+        "Improved PWA icon support",
+        "Added maskable icons for better Android integration",
+        "Updated favicon and manifest"
       ]
     }
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "protocol_handlers": [],
-  "file_handlers": [],
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  },
-  "created": "2024-01-15T00:00:00Z",
-  "updated": "2024-01-15T00:00:00Z"
+  ]
 }

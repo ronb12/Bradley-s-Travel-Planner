@@ -1411,6 +1411,19 @@ body {
         -webkit-overflow-scrolling: touch;
     }
     
+    /* Enhanced mobile search input */
+    .search-input {
+        -webkit-appearance: none;
+        appearance: none;
+        touch-action: manipulation;
+        user-select: text;
+        -webkit-user-select: text;
+    }
+    
+    .search-input-group {
+        touch-action: manipulation;
+    }
+    
     /* Better touch targets for interactive elements */
     .trip-card, .dashboard-card {
         cursor: pointer;
@@ -2516,16 +2529,18 @@ mark {
     
     .search-input-group {
         border-radius: 10px;
+        min-height: 48px;
     }
     
     .search-icon-container {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
     }
     
     .search-input {
         font-size: 16px; /* Prevents zoom on iOS */
-        padding: 0.75rem 0.875rem;
+        padding: 1rem 1.25rem;
+        min-height: 48px;
     }
     
     .search-clear-btn {
@@ -3160,16 +3175,18 @@ mark {
     /* Mobile-friendly search */
     .search-input-group {
         border-radius: 10px;
+        min-height: 48px;
     }
     
     .search-icon-container {
-        width: 44px;
-        height: 44px;
+        width: 48px;
+        height: 48px;
     }
     
     .search-input {
         font-size: 16px; /* Prevents zoom on iOS */
-        padding: 0.75rem 0.875rem;
+        padding: 1rem 1.25rem;
+        min-height: 48px;
     }
     
     .search-clear-btn {
@@ -3249,18 +3266,20 @@ mark {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 100vw;
     height: 100vh;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #667eea 50%, #764ba2 75%, #f093fb 100%);
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     z-index: 10000;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 1rem;
     box-sizing: border-box;
+    min-height: 100vh;
 }
 
 .login-page::before {

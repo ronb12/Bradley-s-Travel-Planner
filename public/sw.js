@@ -1,9 +1,9 @@
 // Bradley's Travel Planner - Service Worker
 // By Bradley Virtual Solutions, LLC
 
-const CACHE_NAME = 'travel-planner-v1.0.0';
-const STATIC_CACHE = 'travel-planner-static-v1.0.0';
-const DYNAMIC_CACHE = 'travel-planner-dynamic-v1.0.0';
+const CACHE_NAME = 'travel-planner-v4.0.0';
+const STATIC_CACHE = 'travel-planner-static-v4.0.0';
+const DYNAMIC_CACHE = 'travel-planner-dynamic-v4.0.0';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
@@ -13,8 +13,19 @@ const STATIC_FILES = [
   '/script.js',
   '/firebase-config.js',
   '/manifest.json',
+  '/icons/icon-48x48.png',
+  '/icons/icon-72x72.png',
+  '/icons/icon-96x96.png',
+  '/icons/icon-144x144.png',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
+  '/icons/icon-maskable-512x512.png',
+  '/icons/apple-touch-icon.png',
+  '/icons/apple-touch-icon-152x152.png',
+  '/icons/apple-touch-icon-167x167.png',
+  '/icons/favicon-16x16.png',
+  '/icons/favicon-32x32.png',
+  '/favicon.ico',
   'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
 ];
