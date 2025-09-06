@@ -5,7 +5,12 @@ class TravelPlanner {
     constructor() {
         this.trips = this.loadTrips();
         this.settings = this.loadSettings();
+        this.packingLists = this.loadPackingLists();
+        this.documents = this.loadDocuments();
         this.currentTripId = null;
+        this.currentMonth = new Date();
+        this.searchQuery = '';
+        this.activeFilter = 'all';
         this.init();
     }
 

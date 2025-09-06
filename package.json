@@ -19,7 +19,8 @@
   "author": "Bradley Virtual Solutions, LLC",
   "license": "MIT",
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "firebase-tools": "^13.0.0"
   },
   "dependencies": {
     "firebase": "^10.7.1"

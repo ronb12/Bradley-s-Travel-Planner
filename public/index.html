@@ -26,9 +26,21 @@
                         <i class="fas fa-map-marked-alt"></i>
                         My Trips
                     </button>
+                    <button class="nav-btn" data-section="calendar">
+                        <i class="fas fa-calendar-alt"></i>
+                        Calendar
+                    </button>
                     <button class="nav-btn" data-section="budget">
                         <i class="fas fa-calculator"></i>
                         Budget
+                    </button>
+                    <button class="nav-btn" data-section="packing">
+                        <i class="fas fa-suitcase"></i>
+                        Packing
+                    </button>
+                    <button class="nav-btn" data-section="documents">
+                        <i class="fas fa-file-alt"></i>
+                        Documents
                     </button>
                     <button class="nav-btn" data-section="settings">
                         <i class="fas fa-cog"></i>
@@ -131,6 +143,58 @@
                     <div id="budget-breakdown-list">
                         <!-- Budget breakdown will be populated here -->
                     </div>
+                </div>
+            </section>
+
+            <!-- Calendar Section -->
+            <section id="calendar" class="content-section">
+                <div class="section-header">
+                    <h2>Travel Calendar</h2>
+                    <p>View your trips in calendar format</p>
+                </div>
+                
+                <div class="calendar-controls">
+                    <button class="btn btn-secondary" onclick="travelPlanner.previousMonth()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <h3 id="current-month">January 2024</h3>
+                    <button class="btn btn-secondary" onclick="travelPlanner.nextMonth()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                
+                <div class="calendar-grid" id="calendar-grid">
+                    <!-- Calendar will be populated here -->
+                </div>
+            </section>
+
+            <!-- Packing Section -->
+            <section id="packing" class="content-section">
+                <div class="section-header">
+                    <h2>Packing Lists</h2>
+                    <button class="btn btn-primary" onclick="travelPlanner.showCreatePackingListModal()">
+                        <i class="fas fa-plus"></i>
+                        New Packing List
+                    </button>
+                </div>
+                
+                <div class="packing-lists" id="packing-lists">
+                    <!-- Packing lists will be populated here -->
+                </div>
+            </section>
+
+            <!-- Documents Section -->
+            <section id="documents" class="content-section">
+                <div class="section-header">
+                    <h2>Travel Documents</h2>
+                    <button class="btn btn-primary" onclick="travelPlanner.showAddDocumentModal()">
+                        <i class="fas fa-plus"></i>
+                        Add Document
+                    </button>
+                </div>
+                
+                <div class="documents-grid" id="documents-grid">
+                    <!-- Documents will be populated here -->
                 </div>
             </section>
 
@@ -251,6 +315,117 @@
         </div>
     </div>
 
+    <!-- Create Packing List Modal -->
+    <div id="create-packing-list-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Packing List</h3>
+                <button class="close-btn" onclick="closeCreatePackingListModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="create-packing-list-form" onsubmit="travelPlanner.createPackingList(event)">
+                <div class="form-group">
+                    <label for="packing-list-name">List Name</label>
+                    <input type="text" id="packing-list-name" required placeholder="e.g., Summer Europe Trip">
+                </div>
+                
+                <div class="form-group">
+                    <label for="packing-trip">Associated Trip</label>
+                    <select id="packing-trip" required>
+                        <option value="">Select a trip</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="packing-categories">Categories (comma-separated)</label>
+                    <input type="text" id="packing-categories" placeholder="e.g., Clothes, Electronics, Toiletries">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreatePackingListModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Create List
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Document Modal -->
+    <div id="add-document-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Travel Document</h3>
+                <button class="close-btn" onclick="closeAddDocumentModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="add-document-form" onsubmit="travelPlanner.addDocument(event)">
+                <div class="form-group">
+                    <label for="document-name">Document Name</label>
+                    <input type="text" id="document-name" required placeholder="e.g., Passport, Visa, Insurance">
+                </div>
+                
+                <div class="form-group">
+                    <label for="document-type">Document Type</label>
+                    <select id="document-type" required>
+                        <option value="passport">Passport</option>
+                        <option value="visa">Visa</option>
+                        <option value="insurance">Travel Insurance</option>
+                        <option value="ticket">Ticket/Boarding Pass</option>
+                        <option value="reservation">Hotel Reservation</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="document-trip">Associated Trip</label>
+                    <select id="document-trip">
+                        <option value="">All Trips</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="document-expiry">Expiry Date</label>
+                    <input type="date" id="document-expiry">
+                </div>
+                
+                <div class="form-group">
+                    <label for="document-notes">Notes</label>
+                    <textarea id="document-notes" placeholder="Additional information about this document..."></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddDocumentModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Add Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Weather Modal -->
+    <div id="weather-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="weather-title">Weather Information</h3>
+                <button class="close-btn" onclick="closeWeatherModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="weather-content">
+                <!-- Weather information will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="firebase-config.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
