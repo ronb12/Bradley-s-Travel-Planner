@@ -1,0 +1,31 @@
+
+    <svg width="76" height="76" viewBox="0 0 76 76" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+      
+      <!-- Background circle -->
+      <circle cx="38" cy="38" r="34.2" fill="url(#bg)"/>
+      
+      <!-- Plane icon -->
+      <g transform="translate(38, 38)">
+        <!-- Plane body -->
+        <ellipse cx="0" cy="0" rx="19" ry="6.08" fill="white" transform="rotate(-15)"/>
+        
+        <!-- Plane wings -->
+        <ellipse cx="-9.12" cy="-3.8000000000000003" rx="13.68" ry="3.8000000000000003" fill="white" transform="rotate(-15)"/>
+        <ellipse cx="9.12" cy="-3.8000000000000003" rx="13.68" ry="3.8000000000000003" fill="white" transform="rotate(-15)"/>
+        
+        <!-- Plane tail -->
+        <ellipse cx="-15.200000000000001" cy="-9.12" rx="5.32" ry="11.4" fill="white" transform="rotate(-15)"/>
+        
+        <!-- Windows -->
+        <circle cx="-6.08" cy="-0.76" r="1.52" fill="#667eea"/>
+        <circle cx="0" cy="-0.76" r="1.52" fill="#667eea"/>
+        <circle cx="6.08" cy="-0.76" r="1.52" fill="#667eea"/>
+      </g>
+    </svg>
+  
