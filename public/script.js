@@ -1,21 +1,40 @@
 // Bradley's Travel Planner - Main JavaScript File
 // By Bradley Virtual Solutions, LLC
 
+// Global variable for TravelPlanner instance
+let travelPlanner;
+
+// Import Firebase Auth functions
+import { auth } from './firebase-config.js';
+import { 
+    signInWithEmailAndPassword, 
+    createUserWithEmailAndPassword, 
+    signInWithPopup, 
+    GoogleAuthProvider, 
+    signOut, 
+    onAuthStateChanged,
+    sendPasswordResetEmail,
+    updateProfile
+} from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
 class TravelPlanner {
     constructor() {
         this.trips = this.loadTrips();
         this.settings = this.loadSettings();
         this.packingLists = this.loadPackingLists();
         this.documents = this.loadDocuments();
+        this.photos = this.loadPhotos();
         this.currentTripId = null;
         this.currentMonth = new Date();
         this.searchQuery = '';
         this.activeFilter = 'all';
+        this.eventListeners = new Map(); // Track event listeners for cleanup
         this.init();
     }
 
     init() {
         console.log('🚀 Bradley\'s Travel Planner - A+ Features Loading...');
+        this.setupAuth();
         this.setupEventListeners();
         this.updateDashboard();
         this.updateTripsDisplay();
@@ -27,52 +46,186 @@ class TravelPlanner {
         this.registerServiceWorker();
         this.setupPWA();
         this.hideSplashScreen();
-        console.log('✅ A+ Features Loaded: Weather, Export, Templates');
+        console.log('✅ A+ Features Loaded: Weather, Export, Templates, Authentication');
+    }
+
+    // Security and validation functions
+    sanitizeInput(input) {
+        if (typeof input !== 'string') return '';
+        return input
+            .replace(/[<>]/g, '') // Remove < and >
+            .replace(/javascript:/gi, '') // Remove javascript: protocol
+            .replace(/on\w+=/gi, '') // Remove event handlers
+            .trim();
+    }
+
+    validateInput(input, type = 'text', maxLength = 255) {
+        if (!input || typeof input !== 'string') return false;
+        
+        const sanitized = this.sanitizeInput(input);
+        if (sanitized.length === 0 || sanitized.length > maxLength) return false;
+        
+        switch (type) {
+            case 'email':
+                return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitized);
+            case 'number':
+                return !isNaN(parseFloat(sanitized)) && isFinite(sanitized);
+            case 'date':
+                return !isNaN(Date.parse(sanitized));
+            case 'currency':
+                return /^\d+(\.\d{1,2})?$/.test(sanitized);
+            default:
+                return sanitized.length > 0;
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    safeInnerHTML(element, html) {
+        if (typeof html !== 'string') return;
+        element.innerHTML = this.escapeHtml(html);
+    }
+
+    // Error handling
+    handleError(error, context = 'Unknown') {
+        console.error(`Error in ${context}:`, error);
+        this.showNotification(`An error occurred: ${error.message || 'Unknown error'}`, 'error');
+    }
+
+    // Memory management
+    addEventListenerWithCleanup(element, event, handler, options = {}) {
+        if (!element || typeof handler !== 'function') return;
+        
+        const key = `${element.id || 'unknown'}_${event}`;
+        if (this.eventListeners.has(key)) {
+            this.removeEventListener(key);
+        }
+        
+        element.addEventListener(event, handler, options);
+        this.eventListeners.set(key, { element, event, handler, options });
+    }
+
+    removeEventListener(key) {
+        const listener = this.eventListeners.get(key);
+        if (listener) {
+            listener.element.removeEventListener(listener.event, listener.handler, listener.options);
+            this.eventListeners.delete(key);
+        }
+    }
+
+    cleanup() {
+        this.eventListeners.forEach((_, key) => {
+            this.removeEventListener(key);
+        });
+        this.eventListeners.clear();
     }
 
     setupEventListeners() {
-        // Navigation
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const section = e.currentTarget.dataset.section;
-                this.showSection(section);
+        try {
+            // Navigation
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                console.log('Setting up navigation for button:', btn.dataset.section);
+                this.addEventListenerWithCleanup(btn, 'click', (e) => {
+                    try {
+                        console.log('Navigation button clicked:', e.currentTarget.dataset.section);
+                        const section = e.currentTarget.dataset.section;
+                        this.showSection(section);
+                    } catch (error) {
+                        console.error('Navigation error:', error);
+                        this.handleError(error, 'Navigation click');
+                    }
+                });
             });
-        });
 
-        // Form submission
-        document.getElementById('create-trip-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.createTrip(e);
-        });
-
-        // Modal close events
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                this.closeAllModals();
+            // Form submission
+            const createTripForm = document.getElementById('create-trip-form');
+            if (createTripForm) {
+                this.addEventListenerWithCleanup(createTripForm, 'submit', (e) => {
+                    try {
+                        e.preventDefault();
+                        this.createTrip(e);
+                    } catch (error) {
+                        this.handleError(error, 'Create trip form');
+                    }
+                });
             }
-        });
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeAllModals();
+            // Modal close events
+            this.addEventListenerWithCleanup(document, 'click', (e) => {
+                try {
+                    if (e.target.classList.contains('modal')) {
+                        this.closeAllModals();
+                    }
+                } catch (error) {
+                    this.handleError(error, 'Modal close');
+                }
+            });
+
+            // Keyboard shortcuts
+            this.addEventListenerWithCleanup(document, 'keydown', (e) => {
+                try {
+                    if (e.key === 'Escape') {
+                        this.closeAllModals();
+                    }
+                } catch (error) {
+                    this.handleError(error, 'Keyboard shortcuts');
+                }
+            });
+
+            // Search functionality
+            const searchInput = document.getElementById('global-search');
+            if (searchInput) {
+                this.addEventListenerWithCleanup(searchInput, 'input', (e) => {
+                    try {
+                        const query = this.sanitizeInput(e.target.value);
+                        this.performGlobalSearch(query);
+                    } catch (error) {
+                        this.handleError(error, 'Search input');
+                    }
+                });
             }
-        });
+        } catch (error) {
+            this.handleError(error, 'Setup event listeners');
+        }
     }
 
     // Navigation
     showSection(sectionName) {
+        console.log('showSection called with:', sectionName);
+        
         // Update navigation
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        document.querySelector(`[data-section="${sectionName}"]`).classList.add('active');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        console.log('Found nav buttons:', navButtons.length);
+        if (navButtons.length > 0) {
+            navButtons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+        }
+        
+        const activeButton = document.querySelector(`[data-section="${sectionName}"]`);
+        console.log('Active button found:', activeButton);
+        if (activeButton) {
+            activeButton.classList.add('active');
+        }
 
         // Update content
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
-        document.getElementById(sectionName).classList.add('active');
+        const contentSections = document.querySelectorAll('.content-section');
+        console.log('Found content sections:', contentSections.length);
+        if (contentSections.length > 0) {
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+            });
+        }
+        
+        const targetSection = document.getElementById(sectionName);
+        console.log('Target section found:', targetSection);
+        if (targetSection) {
+            targetSection.classList.add('active');
+        }
 
         // Update specific sections
         if (sectionName === 'trips') {
@@ -84,38 +237,104 @@ class TravelPlanner {
 
     // Trip Management
     createTrip(event) {
-        const formData = new FormData(event.target);
-        const trip = {
-            id: this.generateId(),
-            name: document.getElementById('trip-name').value,
-            destination: document.getElementById('destination').value,
-            type: document.getElementById('trip-type').value,
-            startDate: document.getElementById('start-date').value,
-            endDate: document.getElementById('end-date').value,
-            budget: parseFloat(document.getElementById('budget').value) || 0,
-            notes: document.getElementById('notes').value,
-            createdAt: new Date().toISOString(),
-            expenses: [],
-            itinerary: []
-        };
+        try {
+            const formData = new FormData(event.target);
+            
+            // Validate and sanitize inputs
+            const name = this.sanitizeInput(document.getElementById('trip-name')?.value || '');
+            const destination = this.sanitizeInput(document.getElementById('destination')?.value || '');
+            const type = this.sanitizeInput(document.getElementById('trip-type')?.value || '');
+            const startDate = this.sanitizeInput(document.getElementById('start-date')?.value || '');
+            const endDate = this.sanitizeInput(document.getElementById('end-date')?.value || '');
+            const budgetValue = this.sanitizeInput(document.getElementById('trip-budget')?.value || '0');
+            const notes = this.sanitizeInput(document.getElementById('notes')?.value || '');
 
-        this.trips.push(trip);
-        this.saveTrips();
-        this.closeCreateTripModal();
-        this.updateDashboard();
-        this.updateTripsDisplay();
-        this.updateBudgetDisplay();
-        this.showNotification('Trip created successfully!', 'success');
-    }
+            // Validate required fields
+            if (!this.validateInput(name, 'text', 100)) {
+                this.showNotification('Please enter a valid trip name', 'error');
+                return;
+            }
+            if (!this.validateInput(destination, 'text', 100)) {
+                this.showNotification('Please enter a valid destination', 'error');
+                return;
+            }
+            if (!this.validateInput(startDate, 'date')) {
+                this.showNotification('Please enter a valid start date', 'error');
+                return;
+            }
+            if (!this.validateInput(endDate, 'date')) {
+                this.showNotification('Please enter a valid end date', 'error');
+                return;
+            }
+            if (!this.validateInput(budgetValue, 'currency')) {
+                this.showNotification('Please enter a valid budget amount', 'error');
+                return;
+            }
 
-    deleteTrip(tripId) {
-        if (confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
-            this.trips = this.trips.filter(trip => trip.id !== tripId);
+            // Validate date logic
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            if (start >= end) {
+                this.showNotification('End date must be after start date', 'error');
+                return;
+            }
+
+            const budget = parseFloat(budgetValue);
+            if (budget < 0) {
+                this.showNotification('Budget cannot be negative', 'error');
+                return;
+            }
+
+            const trip = {
+                id: this.generateId(),
+                name: name,
+                destination: destination,
+                type: type,
+                startDate: startDate,
+                endDate: endDate,
+                budget: budget,
+                notes: notes,
+                createdAt: new Date().toISOString(),
+                expenses: [],
+                itinerary: []
+            };
+
+            this.trips.push(trip);
             this.saveTrips();
+            this.closeCreateTripModal();
             this.updateDashboard();
             this.updateTripsDisplay();
             this.updateBudgetDisplay();
-            this.showNotification('Trip deleted successfully!', 'success');
+            this.showNotification('Trip created successfully!', 'success');
+        } catch (error) {
+            this.handleError(error, 'Create trip');
+        }
+    }
+
+    deleteTrip(tripId) {
+        try {
+            if (!tripId || typeof tripId !== 'string') {
+                this.showNotification('Invalid trip ID', 'error');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this trip? This action cannot be undone.')) {
+                const initialLength = this.trips.length;
+                this.trips = this.trips.filter(trip => trip.id !== tripId);
+                
+                if (this.trips.length === initialLength) {
+                    this.showNotification('Trip not found', 'error');
+                    return;
+                }
+
+                this.saveTrips();
+                this.updateDashboard();
+                this.updateTripsDisplay();
+                this.updateBudgetDisplay();
+                this.showNotification('Trip deleted successfully!', 'success');
+            }
+        } catch (error) {
+            this.handleError(error, 'Delete trip');
         }
     }
 
@@ -129,7 +348,7 @@ class TravelPlanner {
         document.getElementById('trip-type').value = trip.type;
         document.getElementById('start-date').value = trip.startDate;
         document.getElementById('end-date').value = trip.endDate;
-        document.getElementById('budget').value = trip.budget;
+        document.getElementById('trip-budget').value = trip.budget;
         document.getElementById('notes').value = trip.notes;
 
         // Update form to edit mode
@@ -156,50 +375,67 @@ class TravelPlanner {
 
     // Dashboard Updates
     updateDashboard() {
-        const upcomingTrips = this.getUpcomingTrips();
-        const totalBudget = this.calculateTotalBudget();
-        
-        document.getElementById('upcoming-count').textContent = 
-            `${upcomingTrips.length} trip${upcomingTrips.length !== 1 ? 's' : ''} planned`;
-        document.getElementById('total-budget').textContent = this.formatCurrency(totalBudget);
-        
-        this.updateRecentTrips();
+        try {
+            const upcomingTrips = this.getUpcomingTrips();
+            const totalBudget = this.calculateTotalBudget();
+            
+            const upcomingCountEl = document.getElementById('upcoming-count');
+            const totalBudgetEl = document.getElementById('total-budget');
+            
+            if (upcomingCountEl) {
+                upcomingCountEl.textContent = 
+                    `${upcomingTrips.length} trip${upcomingTrips.length !== 1 ? 's' : ''} planned`;
+            }
+            
+            if (totalBudgetEl) {
+                totalBudgetEl.textContent = this.formatCurrency(totalBudget);
+            }
+            
+            this.updateRecentTrips();
+        } catch (error) {
+            this.handleError(error, 'Update dashboard');
+        }
     }
 
     updateRecentTrips() {
-        const recentTrips = this.trips
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 3);
+        try {
+            const recentTrips = this.trips
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                .slice(0, 3);
 
-        const container = document.getElementById('recent-trips-list');
-        
-        if (recentTrips.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <h3>No trips yet</h3>
-                    <p>Create your first trip to get started!</p>
+            const container = document.getElementById('recent-trips-list');
+            if (!container) return;
+            
+            if (recentTrips.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-map-marked-alt"></i>
+                        <h3>No trips yet</h3>
+                        <p>Create your first trip to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = recentTrips.map(trip => `
+                <div class="trip-item">
+                    <div class="trip-item-info">
+                        <h4>${this.escapeHtml(trip.name)}</h4>
+                        <p>${this.escapeHtml(trip.destination)} • ${this.formatDate(trip.startDate)}</p>
+                    </div>
+                    <div class="trip-item-actions">
+                        <button class="btn btn-secondary" onclick="travelPlanner.viewTrip('${trip.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-primary" onclick="travelPlanner.editTrip('${trip.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
                 </div>
-            `;
-            return;
+            `).join('');
+        } catch (error) {
+            this.handleError(error, 'Update recent trips');
         }
-
-        container.innerHTML = recentTrips.map(trip => `
-            <div class="trip-item">
-                <div class="trip-item-info">
-                    <h4>${trip.name}</h4>
-                    <p>${trip.destination} • ${this.formatDate(trip.startDate)}</p>
-                </div>
-                <div class="trip-item-actions">
-                    <button class="btn btn-secondary" onclick="travelPlanner.viewTrip('${trip.id}')">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn btn-primary" onclick="travelPlanner.editTrip('${trip.id}')">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </div>
-            </div>
-        `).join('');
     }
 
     // Trips Display
@@ -338,6 +574,23 @@ class TravelPlanner {
                     </div>
                 </div>
 
+                <div class="photos-section">
+                    <h4><i class="fas fa-images"></i> Trip Photos</h4>
+                    <div class="photos-container">
+                        <div class="photos-grid" id="photos-grid-${trip.id}">
+                            ${this.renderTripPhotos(trip.id)}
+                        </div>
+                        <div class="photo-actions">
+                            <button class="btn btn-primary" onclick="travelPlanner.openPhotoUpload('${trip.id}')">
+                                <i class="fas fa-plus"></i> Add Photos
+                            </button>
+                            <button class="btn btn-secondary" onclick="travelPlanner.openPhotoGallery('${trip.id}')">
+                                <i class="fas fa-images"></i> View All Photos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 ${trip.notes ? `
                     <div class="notes-section">
                         <h4>Notes</h4>
@@ -410,6 +663,7 @@ class TravelPlanner {
         document.getElementById('remaining-budget-amount').textContent = this.formatCurrency(remaining);
 
         this.updateBudgetBreakdown();
+        this.updateAnalytics();
     }
 
     updateBudgetBreakdown() {
@@ -528,8 +782,36 @@ class TravelPlanner {
             const startDate = new Date(trip.startDate);
             const endDate = new Date(trip.endDate);
             
-            // For demo purposes, we'll show mock weather data
-            // In production, you'd use a real weather API like OpenWeatherMap
+            // Try to get real weather data first
+            try {
+                const weatherData = await this.fetchRealWeatherData(city, startDate, endDate);
+                if (weatherData) {
+                    weatherContainer.innerHTML = `
+                        <div class="weather-cards">
+                            ${weatherData.map(day => `
+                                <div class="weather-card">
+                                    <div class="weather-date">${day.date}</div>
+                                    <div class="weather-icon">${day.icon}</div>
+                                    <div class="weather-temp">${day.temp}°F</div>
+                                    <div class="weather-desc">${day.description}</div>
+                                    <div class="weather-details">
+                                        <small>H: ${day.maxTemp}° L: ${day.minTemp}°</small>
+                                        <small>Humidity: ${day.humidity}%</small>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="weather-source">
+                            <small>Weather data provided by wttr.in (free service)</small>
+                        </div>
+                    `;
+                    return;
+                }
+            } catch (apiError) {
+                console.log('Weather API unavailable, using mock data:', apiError.message);
+            }
+            
+            // Fallback to mock weather data
             const mockWeather = this.generateMockWeather(city, startDate, endDate);
             
             weatherContainer.innerHTML = `
@@ -543,6 +825,9 @@ class TravelPlanner {
                         </div>
                     `).join('')}
                 </div>
+                <div class="weather-source">
+                    <small>Demo weather data - Real weather data is automatically loaded from free APIs</small>
+                </div>
             `;
         } catch (error) {
             console.error('Error loading weather:', error);
@@ -551,6 +836,239 @@ class TravelPlanner {
                 weatherContainer.innerHTML = '<p class="weather-error">Weather data unavailable</p>';
             }
         }
+    }
+
+    async fetchRealWeatherData(city, startDate, endDate) {
+        try {
+            // Use free weather API that doesn't require API key
+            // Using wttr.in - a free weather service
+            const response = await fetch(
+                `https://wttr.in/${encodeURIComponent(city)}?format=j1&lang=en`
+            );
+            
+            if (!response.ok) {
+                throw new Error('Weather API request failed');
+            }
+            
+            const data = await response.json();
+            
+            // Process weather data for trip dates
+            const weatherData = [];
+            const tripDays = this.getDaysBetweenDates(startDate, endDate);
+            
+            // wttr.in provides 3 days of weather data
+            const weatherDays = data.weather || [];
+            
+            tripDays.forEach((day, index) => {
+                if (index < weatherDays.length) {
+                    const weatherDay = weatherDays[index];
+                    const hourly = weatherDay.hourly || [];
+                    const noonWeather = hourly[6] || hourly[0] || weatherDay.hourly[0]; // Get noon weather or first available
+                    
+                    if (noonWeather) {
+                        weatherData.push({
+                            date: day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                            icon: this.getWeatherIconFromWttr(noonWeather.weatherCode),
+                            temp: Math.round(parseInt(noonWeather.tempC)),
+                            maxTemp: Math.round(parseInt(weatherDay.maxtempC)),
+                            minTemp: Math.round(parseInt(weatherDay.mintempC)),
+                            description: noonWeather.weatherDesc[0].value,
+                            humidity: parseInt(noonWeather.humidity)
+                        });
+                    }
+                }
+            });
+            
+            return weatherData;
+        } catch (error) {
+            console.log('wttr.in failed, trying alternative API:', error.message);
+            
+            // Fallback to another free weather API
+            try {
+                const response = await fetch(
+                    `https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.0060&daily=temperature_2m_max,temperature_2m_min,weathercode&timezone=auto&forecast_days=5`
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Alternative weather API failed');
+                }
+                
+                const data = await response.json();
+                
+                const weatherData = [];
+                const tripDays = this.getDaysBetweenDates(startDate, endDate);
+                
+                tripDays.forEach((day, index) => {
+                    if (index < data.daily.time.length) {
+                        weatherData.push({
+                            date: day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                            icon: this.getWeatherIconFromCode(data.daily.weathercode[index]),
+                            temp: Math.round((data.daily.temperature_2m_max[index] + data.daily.temperature_2m_min[index]) / 2),
+                            maxTemp: Math.round(data.daily.temperature_2m_max[index]),
+                            minTemp: Math.round(data.daily.temperature_2m_min[index]),
+                            description: this.getWeatherDescription(data.daily.weathercode[index]),
+                            humidity: 65 // Default humidity since this API doesn't provide it
+                        });
+                    }
+                });
+                
+                return weatherData;
+            } catch (fallbackError) {
+                console.log('All weather APIs failed:', fallbackError.message);
+                throw new Error('Weather services unavailable');
+            }
+        }
+    }
+
+    getDaysBetweenDates(startDate, endDate) {
+        const days = [];
+        const currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+            days.push(new Date(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        return days;
+    }
+
+    getWeatherIcon(iconCode) {
+        const iconMap = {
+            '01d': '☀️', '01n': '🌙',
+            '02d': '⛅', '02n': '☁️',
+            '03d': '☁️', '03n': '☁️',
+            '04d': '☁️', '04n': '☁️',
+            '09d': '🌧️', '09n': '🌧️',
+            '10d': '🌦️', '10n': '🌧️',
+            '11d': '⛈️', '11n': '⛈️',
+            '13d': '❄️', '13n': '❄️',
+            '50d': '🌫️', '50n': '🌫️'
+        };
+        return iconMap[iconCode] || '🌤️';
+    }
+
+    getWeatherIconFromWttr(weatherCode) {
+        // wttr.in weather code mapping
+        const iconMap = {
+            '113': '☀️',  // Clear
+            '116': '⛅',  // Partly Cloudy
+            '119': '☁️',  // Cloudy
+            '122': '☁️',  // Overcast
+            '143': '🌫️', // Mist
+            '176': '🌦️', // Patchy rain nearby
+            '179': '🌧️', // Patchy snow nearby
+            '182': '🌧️', // Patchy sleet nearby
+            '185': '🌧️', // Patchy freezing drizzle nearby
+            '200': '⛈️', // Thundery outbreaks in nearby
+            '227': '❄️', // Blowing snow
+            '230': '❄️', // Blizzard
+            '248': '🌫️', // Fog
+            '260': '🌫️', // Freezing fog
+            '263': '🌦️', // Patchy light drizzle
+            '266': '🌧️', // Light drizzle
+            '281': '🌧️', // Freezing drizzle
+            '284': '🌧️', // Heavy freezing drizzle
+            '293': '🌦️', // Patchy light rain
+            '296': '🌧️', // Light rain
+            '299': '🌧️', // Moderate rain at times
+            '302': '🌧️', // Moderate rain
+            '305': '🌧️', // Heavy rain at times
+            '308': '🌧️', // Heavy rain
+            '311': '🌧️', // Light freezing rain
+            '314': '🌧️', // Moderate or heavy freezing rain
+            '317': '🌧️', // Light sleet
+            '320': '🌧️', // Moderate or heavy sleet
+            '323': '❄️', // Patchy light snow
+            '326': '❄️', // Light snow
+            '329': '❄️', // Patchy moderate snow
+            '332': '❄️', // Moderate snow
+            '335': '❄️', // Patchy heavy snow
+            '338': '❄️', // Heavy snow
+            '350': '🌧️', // Ice pellets
+            '353': '🌦️', // Light rain shower
+            '356': '🌧️', // Moderate or heavy rain shower
+            '359': '🌧️', // Torrential rain shower
+            '362': '🌧️', // Light sleet showers
+            '365': '🌧️', // Moderate or heavy sleet showers
+            '368': '❄️', // Light snow showers
+            '371': '❄️', // Moderate or heavy snow showers
+            '374': '🌧️', // Light showers of ice pellets
+            '377': '🌧️', // Moderate or heavy showers of ice pellets
+            '386': '⛈️', // Patchy light rain with thunder
+            '389': '⛈️', // Moderate or heavy rain with thunder
+            '392': '⛈️', // Patchy light snow with thunder
+            '395': '⛈️'  // Moderate or heavy snow with thunder
+        };
+        return iconMap[weatherCode] || '🌤️';
+    }
+
+    getWeatherIconFromCode(weatherCode) {
+        // Open-Meteo weather code mapping (WMO Weather interpretation codes)
+        const iconMap = {
+            '0': '☀️',   // Clear sky
+            '1': '☀️',   // Mainly clear
+            '2': '⛅',   // Partly cloudy
+            '3': '☁️',   // Overcast
+            '45': '🌫️', // Fog
+            '48': '🌫️', // Depositing rime fog
+            '51': '🌦️', // Light drizzle
+            '53': '🌦️', // Moderate drizzle
+            '55': '🌧️', // Dense drizzle
+            '56': '🌧️', // Light freezing drizzle
+            '57': '🌧️', // Dense freezing drizzle
+            '61': '🌧️', // Slight rain
+            '63': '🌧️', // Moderate rain
+            '65': '🌧️', // Heavy rain
+            '66': '🌧️', // Light freezing rain
+            '67': '🌧️', // Heavy freezing rain
+            '71': '❄️', // Slight snow fall
+            '73': '❄️', // Moderate snow fall
+            '75': '❄️', // Heavy snow fall
+            '77': '❄️', // Snow grains
+            '80': '🌦️', // Slight rain showers
+            '81': '🌧️', // Moderate rain showers
+            '82': '🌧️', // Violent rain showers
+            '85': '❄️', // Slight snow showers
+            '86': '❄️', // Heavy snow showers
+            '95': '⛈️', // Thunderstorm
+            '96': '⛈️', // Thunderstorm with slight hail
+            '99': '⛈️'  // Thunderstorm with heavy hail
+        };
+        return iconMap[weatherCode.toString()] || '🌤️';
+    }
+
+    getWeatherDescription(weatherCode) {
+        const descriptions = {
+            '0': 'Clear sky',
+            '1': 'Mainly clear',
+            '2': 'Partly cloudy',
+            '3': 'Overcast',
+            '45': 'Fog',
+            '48': 'Rime fog',
+            '51': 'Light drizzle',
+            '53': 'Moderate drizzle',
+            '55': 'Dense drizzle',
+            '56': 'Light freezing drizzle',
+            '57': 'Dense freezing drizzle',
+            '61': 'Slight rain',
+            '63': 'Moderate rain',
+            '65': 'Heavy rain',
+            '66': 'Light freezing rain',
+            '67': 'Heavy freezing rain',
+            '71': 'Slight snow',
+            '73': 'Moderate snow',
+            '75': 'Heavy snow',
+            '77': 'Snow grains',
+            '80': 'Slight rain showers',
+            '81': 'Moderate rain showers',
+            '82': 'Violent rain showers',
+            '85': 'Slight snow showers',
+            '86': 'Heavy snow showers',
+            '95': 'Thunderstorm',
+            '96': 'Thunderstorm with hail',
+            '99': 'Thunderstorm with heavy hail'
+        };
+        return descriptions[weatherCode.toString()] || 'Unknown';
     }
 
     generateMockWeather(city, startDate, endDate) {
@@ -1127,7 +1645,7 @@ class TravelPlanner {
         const tripNameField = document.getElementById('trip-name');
         const destinationField = document.getElementById('destination');
         const tripTypeField = document.getElementById('trip-type');
-        const budgetField = document.getElementById('budget');
+        const budgetField = document.getElementById('trip-budget');
         
         if (tripNameField) tripNameField.value = template.name;
         if (destinationField) destinationField.value = template.destination;
@@ -2591,68 +3109,1232 @@ class TravelPlanner {
             }
         }
     }
+
+    // Photo Gallery Management
+    async loadPhotos() {
+        try {
+            // Try to load from Firestore first
+            const photosSnapshot = await getDocs(collection(db, 'photos'));
+            const firestorePhotos = photosSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            
+            if (firestorePhotos.length > 0) {
+                this.photos = firestorePhotos;
+                console.log(`📸 Loaded ${firestorePhotos.length} photos from Firestore`);
+                return firestorePhotos;
+            }
+        } catch (error) {
+            console.log('📸 Firestore not available, loading from localStorage');
+        }
+        
+        // Fallback to localStorage
+        const photos = localStorage.getItem('tripPhotos');
+        const localPhotos = photos ? JSON.parse(photos) : [];
+        this.photos = localPhotos;
+        return localPhotos;
+    }
+
+    async savePhotos() {
+        try {
+            // Save to Firestore
+            const batch = writeBatch(db);
+            
+            // Clear existing photos in Firestore
+            const photosSnapshot = await getDocs(collection(db, 'photos'));
+            photosSnapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            
+            // Add all current photos
+            this.photos.forEach(photo => {
+                const photoRef = doc(collection(db, 'photos'), photo.id);
+                batch.set(photoRef, {
+                    tripId: photo.tripId,
+                    caption: photo.caption,
+                    date: photo.date,
+                    fileName: photo.fileName,
+                    size: photo.size,
+                    originalSize: photo.originalSize || photo.size,
+                    // Note: Not storing the actual image data (url) to save space
+                    // Only storing metadata
+                    hasImage: !!photo.url
+                });
+            });
+            
+            await batch.commit();
+            console.log(`📸 Saved ${this.photos.length} photo records to Firestore`);
+        } catch (error) {
+            console.log('📸 Firestore not available, saving to localStorage');
+            localStorage.setItem('tripPhotos', JSON.stringify(this.photos));
+        }
+    }
+
+    renderTripPhotos(tripId) {
+        const tripPhotos = this.photos.filter(photo => photo.tripId === tripId);
+        if (tripPhotos.length === 0) {
+            return '<div class="no-photos"><i class="fas fa-camera"></i><p>No photos yet. Add some memories!</p></div>';
+        }
+        
+        return tripPhotos.slice(0, 6).map(photo => `
+            <div class="photo-item" onclick="travelPlanner.viewPhoto('${photo.id}')">
+                <img src="${photo.url}" alt="${photo.caption || 'Trip photo'}" loading="lazy">
+                <div class="photo-overlay">
+                    <i class="fas fa-eye"></i>
+                </div>
+            </div>
+        `).join('') + (tripPhotos.length > 6 ? `<div class="photo-more">+${tripPhotos.length - 6} more</div>` : '');
+    }
+
+    openPhotoUpload(tripId) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.multiple = true;
+        input.onchange = (e) => this.handlePhotoUpload(e, tripId);
+        input.click();
+    }
+
+    async handlePhotoUpload(event, tripId) {
+        const files = Array.from(event.target.files);
+        for (const file of files) {
+            if (file.type.startsWith('image/')) {
+                // Check file size (limit to 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showNotification('Photo too large. Please choose a file under 5MB.', 'error');
+                    continue;
+                }
+
+                // Compress image before storing
+                this.compressImage(file, async (compressedFile) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        const photo = {
+                            id: this.generateId(),
+                            tripId: tripId,
+                            url: e.target.result, // Keep Base64 for local display
+                            caption: '',
+                            date: new Date().toISOString(),
+                            fileName: file.name,
+                            size: compressedFile.size,
+                            originalSize: file.size,
+                            hasImage: true
+                        };
+                        this.photos.push(photo);
+                        await this.savePhotos(); // Save metadata to Firestore
+                        this.updateTripPhotos(tripId);
+                        this.showNotification('Photo added successfully!', 'success');
+                    };
+                    reader.readAsDataURL(compressedFile);
+                });
+            }
+        }
+    }
+
+    compressImage(file, callback) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        
+        img.onload = () => {
+            // Calculate new dimensions (max 1200px width)
+            const maxWidth = 1200;
+            const maxHeight = 1200;
+            let { width, height } = img;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = (height * maxWidth) / width;
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxHeight) {
+                    width = (width * maxHeight) / height;
+                    height = maxHeight;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            
+            // Draw and compress
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(callback, 'image/jpeg', 0.8); // 80% quality
+        };
+        
+        img.src = URL.createObjectURL(file);
+    }
+
+    updateTripPhotos(tripId) {
+        const photosGrid = document.getElementById(`photos-grid-${tripId}`);
+        if (photosGrid) {
+            photosGrid.innerHTML = this.renderTripPhotos(tripId);
+        }
+    }
+
+    openPhotoGallery(tripId) {
+        const tripPhotos = this.photos.filter(photo => photo.tripId === tripId);
+        if (tripPhotos.length === 0) {
+            this.showNotification('No photos to display', 'info');
+            return;
+        }
+
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'photo-gallery-modal';
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-images"></i> Photo Gallery</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="gallery-grid">
+                        ${tripPhotos.map(photo => `
+                            <div class="gallery-item" onclick="travelPlanner.viewPhoto('${photo.id}')">
+                                <img src="${photo.url}" alt="${photo.caption || 'Trip photo'}" loading="lazy">
+                                <div class="gallery-overlay">
+                                    <div class="gallery-actions">
+                                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); travelPlanner.editPhoto('${photo.id}')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); travelPlanner.deletePhoto('${photo.id}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="gallery-caption">${photo.caption || 'Untitled'}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    viewPhoto(photoId) {
+        const photo = this.photos.find(p => p.id === photoId);
+        if (!photo) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'photo-viewer-modal';
+        modal.innerHTML = `
+            <div class="modal-content photo-viewer">
+                <div class="modal-header">
+                    <h3>${photo.caption || 'Trip Photo'}</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="photo-viewer-container">
+                        <img src="${photo.url}" alt="${photo.caption || 'Trip photo'}" class="photo-viewer-image">
+                        <div class="photo-viewer-info">
+                            <p><strong>Date:</strong> ${this.formatDate(photo.date)}</p>
+                            <p><strong>File:</strong> ${photo.fileName}</p>
+                            <p><strong>Size:</strong> ${this.formatFileSize(photo.size)}</p>
+                            ${photo.caption ? `<p><strong>Caption:</strong> ${photo.caption}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    editPhoto(photoId) {
+        const photo = this.photos.find(p => p.id === photoId);
+        if (!photo) return;
+
+        const caption = prompt('Edit photo caption:', photo.caption || '');
+        if (caption !== null) {
+            photo.caption = caption;
+            this.savePhotos();
+            this.showNotification('Photo caption updated!', 'success');
+            // Refresh gallery if open
+            const galleryModal = document.getElementById('photo-gallery-modal');
+            if (galleryModal) {
+                galleryModal.remove();
+                this.openPhotoGallery(photo.tripId);
+            }
+        }
+    }
+
+    deletePhoto(photoId) {
+        if (confirm('Are you sure you want to delete this photo?')) {
+            this.photos = this.photos.filter(p => p.id !== photoId);
+            this.savePhotos();
+            this.showNotification('Photo deleted successfully!', 'success');
+            // Refresh gallery if open
+            const galleryModal = document.getElementById('photo-gallery-modal');
+            if (galleryModal) {
+                galleryModal.remove();
+                const photo = this.photos.find(p => p.id === photoId);
+                if (photo) {
+                    this.openPhotoGallery(photo.tripId);
+                }
+            }
+        }
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Advanced Search Functionality
+    performGlobalSearch(query) {
+        if (!query || query.length < 2) {
+            this.clearSearchResults();
+            this.hideSearchSuggestions();
+            this.updateClearButton();
+            return;
+        }
+
+        const results = this.searchAllData(query);
+        this.displaySearchResults(results, query);
+        this.updateClearButton();
+    }
+
+    showSearchSuggestions() {
+        const suggestions = [
+            'Paris, France',
+            'Tokyo, Japan',
+            'New York, USA',
+            'London, UK',
+            'Sydney, Australia',
+            'Packing List',
+            'Passport',
+            'Visa',
+            'Hotel Booking',
+            'Flight Tickets'
+        ];
+
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        if (suggestionsContainer) {
+            const content = suggestionsContainer.querySelector('.search-dropdown-content');
+            if (content) {
+                content.innerHTML = suggestions.map(suggestion => 
+                    `<div class="search-suggestion" onclick="travelPlanner.selectSuggestion('${suggestion}')">${suggestion}</div>`
+                ).join('');
+                suggestionsContainer.classList.add('show');
+            }
+        }
+    }
+
+    hideSearchSuggestions() {
+        const suggestionsContainer = document.getElementById('search-suggestions');
+        if (suggestionsContainer) {
+            suggestionsContainer.classList.remove('show');
+        }
+    }
+
+    selectSuggestion(suggestion) {
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.value = suggestion;
+            this.performGlobalSearch(suggestion);
+            this.hideSearchSuggestions();
+        }
+    }
+
+    clearSearch() {
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.value = '';
+            this.clearSearchResults();
+            this.hideSearchSuggestions();
+            this.updateClearButton();
+            searchInput.focus();
+        }
+    }
+
+    updateClearButton() {
+        const searchInput = document.getElementById('global-search');
+        const clearButton = document.querySelector('.search-clear-btn');
+        
+        if (searchInput && clearButton) {
+            if (searchInput.value.trim().length > 0) {
+                clearButton.style.display = 'flex';
+            } else {
+                clearButton.style.display = 'none';
+            }
+        }
+    }
+
+    searchAllData(query) {
+        const searchTerm = query.toLowerCase();
+        const results = {
+            trips: [],
+            packingLists: [],
+            documents: [],
+            photos: []
+        };
+
+        // Search trips
+        this.trips.forEach(trip => {
+            const matches = [];
+            if (trip.name.toLowerCase().includes(searchTerm)) matches.push('name');
+            if (trip.destination.toLowerCase().includes(searchTerm)) matches.push('destination');
+            if (trip.type.toLowerCase().includes(searchTerm)) matches.push('type');
+            if (trip.notes && trip.notes.toLowerCase().includes(searchTerm)) matches.push('notes');
+            
+            if (matches.length > 0) {
+                results.trips.push({
+                    ...trip,
+                    matches: matches,
+                    relevance: this.calculateRelevance(trip, searchTerm, matches)
+                });
+            }
+        });
+
+        // Search packing lists
+        this.packingLists.forEach(list => {
+            const matches = [];
+            if (list.name.toLowerCase().includes(searchTerm)) matches.push('name');
+            if (list.categories.some(cat => cat.toLowerCase().includes(searchTerm))) matches.push('categories');
+            
+            if (matches.length > 0) {
+                const trip = this.trips.find(t => t.id === list.tripId);
+                results.packingLists.push({
+                    ...list,
+                    tripName: trip ? trip.name : 'Unknown Trip',
+                    matches: matches,
+                    relevance: this.calculateRelevance(list, searchTerm, matches)
+                });
+            }
+        });
+
+        // Search documents
+        this.documents.forEach(doc => {
+            const matches = [];
+            if (doc.name.toLowerCase().includes(searchTerm)) matches.push('name');
+            if (doc.type.toLowerCase().includes(searchTerm)) matches.push('type');
+            if (doc.notes && doc.notes.toLowerCase().includes(searchTerm)) matches.push('notes');
+            
+            if (matches.length > 0) {
+                const trip = this.trips.find(t => t.id === doc.tripId);
+                results.documents.push({
+                    ...doc,
+                    tripName: trip ? trip.name : 'General',
+                    matches: matches,
+                    relevance: this.calculateRelevance(doc, searchTerm, matches)
+                });
+            }
+        });
+
+        // Search photos
+        this.photos.forEach(photo => {
+            const matches = [];
+            if (photo.caption && photo.caption.toLowerCase().includes(searchTerm)) matches.push('caption');
+            if (photo.fileName.toLowerCase().includes(searchTerm)) matches.push('fileName');
+            
+            if (matches.length > 0) {
+                const trip = this.trips.find(t => t.id === photo.tripId);
+                results.photos.push({
+                    ...photo,
+                    tripName: trip ? trip.name : 'Unknown Trip',
+                    matches: matches,
+                    relevance: this.calculateRelevance(photo, searchTerm, matches)
+                });
+            }
+        });
+
+        return results;
+    }
+
+    calculateRelevance(item, searchTerm, matches) {
+        let score = 0;
+        const searchLower = searchTerm.toLowerCase();
+        
+        matches.forEach(match => {
+            const fieldValue = item[match] ? item[match].toString().toLowerCase() : '';
+            if (fieldValue.startsWith(searchLower)) score += 10;
+            else if (fieldValue.includes(searchLower)) score += 5;
+        });
+
+        return score;
+    }
+
+    displaySearchResults(results, query) {
+        const totalResults = results.trips.length + results.packingLists.length + results.documents.length + results.photos.length;
+        
+        if (totalResults === 0) {
+            this.showNotification(`No results found for "${query}"`, 'info');
+            return;
+        }
+
+        // Create search results modal
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'search-results-modal';
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-search"></i> Search Results for "${query}"</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="search-summary">
+                        <p>Found ${totalResults} result${totalResults !== 1 ? 's' : ''} across all sections</p>
+                    </div>
+                    <div class="search-results">
+                        ${this.renderSearchResults(results)}
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    renderSearchResults(results) {
+        let html = '';
+
+        // Trips
+        if (results.trips.length > 0) {
+            html += `
+                <div class="search-section">
+                    <h4><i class="fas fa-map-marked-alt"></i> Trips (${results.trips.length})</h4>
+                    <div class="search-items">
+                        ${results.trips.sort((a, b) => b.relevance - a.relevance).map(trip => `
+                            <div class="search-item" onclick="travelPlanner.showTripDetailsModal('${trip.id}'); this.closest('.modal').remove()">
+                                <div class="search-item-header">
+                                    <h5>${this.highlightSearchTerm(trip.name, this.getSearchTerm())}</h5>
+                                    <span class="search-item-type">Trip</span>
+                                </div>
+                                <div class="search-item-details">
+                                    <p><strong>Destination:</strong> ${this.highlightSearchTerm(trip.destination, this.getSearchTerm())}</p>
+                                    <p><strong>Type:</strong> ${trip.type}</p>
+                                    <p><strong>Dates:</strong> ${this.formatDate(trip.startDate)} - ${this.formatDate(trip.endDate)}</p>
+                                </div>
+                                <div class="search-item-matches">
+                                    <small>Matched in: ${trip.matches.join(', ')}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Packing Lists
+        if (results.packingLists.length > 0) {
+            html += `
+                <div class="search-section">
+                    <h4><i class="fas fa-suitcase"></i> Packing Lists (${results.packingLists.length})</h4>
+                    <div class="search-items">
+                        ${results.packingLists.sort((a, b) => b.relevance - a.relevance).map(list => `
+                            <div class="search-item" onclick="travelPlanner.showSection('packing'); this.closest('.modal').remove()">
+                                <div class="search-item-header">
+                                    <h5>${this.highlightSearchTerm(list.name, this.getSearchTerm())}</h5>
+                                    <span class="search-item-type">Packing List</span>
+                                </div>
+                                <div class="search-item-details">
+                                    <p><strong>Trip:</strong> ${list.tripName}</p>
+                                    <p><strong>Categories:</strong> ${list.categories.join(', ')}</p>
+                                </div>
+                                <div class="search-item-matches">
+                                    <small>Matched in: ${list.matches.join(', ')}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Documents
+        if (results.documents.length > 0) {
+            html += `
+                <div class="search-section">
+                    <h4><i class="fas fa-file-alt"></i> Documents (${results.documents.length})</h4>
+                    <div class="search-items">
+                        ${results.documents.sort((a, b) => b.relevance - a.relevance).map(doc => `
+                            <div class="search-item" onclick="travelPlanner.showSection('documents'); this.closest('.modal').remove()">
+                                <div class="search-item-header">
+                                    <h5>${this.highlightSearchTerm(doc.name, this.getSearchTerm())}</h5>
+                                    <span class="search-item-type">Document</span>
+                                </div>
+                                <div class="search-item-details">
+                                    <p><strong>Type:</strong> ${doc.type}</p>
+                                    <p><strong>Trip:</strong> ${doc.tripName}</p>
+                                    ${doc.expiryDate ? `<p><strong>Expires:</strong> ${this.formatDate(doc.expiryDate)}</p>` : ''}
+                                </div>
+                                <div class="search-item-matches">
+                                    <small>Matched in: ${doc.matches.join(', ')}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Photos
+        if (results.photos.length > 0) {
+            html += `
+                <div class="search-section">
+                    <h4><i class="fas fa-images"></i> Photos (${results.photos.length})</h4>
+                    <div class="search-items">
+                        ${results.photos.sort((a, b) => b.relevance - a.relevance).map(photo => `
+                            <div class="search-item" onclick="travelPlanner.viewPhoto('${photo.id}'); this.closest('.modal').remove()">
+                                <div class="search-item-header">
+                                    <h5>${photo.caption || 'Untitled Photo'}</h5>
+                                    <span class="search-item-type">Photo</span>
+                                </div>
+                                <div class="search-item-details">
+                                    <p><strong>Trip:</strong> ${photo.tripName}</p>
+                                    <p><strong>File:</strong> ${photo.fileName}</p>
+                                    <p><strong>Date:</strong> ${this.formatDate(photo.date)}</p>
+                                </div>
+                                <div class="search-item-matches">
+                                    <small>Matched in: ${photo.matches.join(', ')}</small>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        return html;
+    }
+
+    highlightSearchTerm(text, searchTerm) {
+        if (!searchTerm) return text;
+        const regex = new RegExp(`(${searchTerm})`, 'gi');
+        return text.replace(regex, '<mark>$1</mark>');
+    }
+
+    getSearchTerm() {
+        const searchInput = document.getElementById('global-search');
+        return searchInput ? searchInput.value : '';
+    }
+
+    clearSearchResults() {
+        const modal = document.getElementById('search-results-modal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // Advanced Analytics
+    updateAnalytics() {
+        this.updateSpendingTrends();
+        this.updateTopExpenses();
+        this.updateBudgetEfficiency();
+        this.updateMonthlySpending();
+    }
+
+    updateSpendingTrends() {
+        const container = document.getElementById('spending-trends-chart');
+        if (!container) return;
+
+        const allExpenses = this.getAllExpenses();
+        const trends = this.calculateSpendingTrends(allExpenses);
+        
+        container.innerHTML = `
+            <div class="trends-summary">
+                <div class="trend-item">
+                    <span class="trend-label">Average per trip:</span>
+                    <span class="trend-value">${this.formatCurrency(trends.averagePerTrip)}</span>
+                </div>
+                <div class="trend-item">
+                    <span class="trend-label">Most expensive trip:</span>
+                    <span class="trend-value">${this.formatCurrency(trends.mostExpensive)}</span>
+                </div>
+                <div class="trend-item">
+                    <span class="trend-label">Total trips:</span>
+                    <span class="trend-value">${trends.totalTrips}</span>
+                </div>
+            </div>
+            <div class="trend-chart">
+                ${this.generateTrendChart(trends.tripSpending)}
+            </div>
+        `;
+    }
+
+    updateTopExpenses() {
+        const container = document.getElementById('top-expenses-list');
+        if (!container) return;
+
+        const allExpenses = this.getAllExpenses();
+        const topExpenses = allExpenses
+            .sort((a, b) => b.amount - a.amount)
+            .slice(0, 5);
+
+        if (topExpenses.length === 0) {
+            container.innerHTML = '<p class="no-data">No expenses yet</p>';
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="expenses-list">
+                ${topExpenses.map(expense => `
+                    <div class="expense-item">
+                        <div class="expense-info">
+                            <span class="expense-description">${expense.description}</span>
+                            <span class="expense-trip">${this.getTripName(expense.tripId)}</span>
+                        </div>
+                        <span class="expense-amount">${this.formatCurrency(expense.amount)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    updateBudgetEfficiency() {
+        const container = document.getElementById('budget-efficiency-stats');
+        if (!container) return;
+
+        const efficiency = this.calculateBudgetEfficiency();
+        
+        container.innerHTML = `
+            <div class="efficiency-stats">
+                <div class="efficiency-item">
+                    <div class="efficiency-label">Budget Utilization</div>
+                    <div class="efficiency-bar">
+                        <div class="efficiency-fill" style="width: ${efficiency.utilization}%"></div>
+                    </div>
+                    <div class="efficiency-value">${efficiency.utilization.toFixed(1)}%</div>
+                </div>
+                <div class="efficiency-item">
+                    <div class="efficiency-label">Savings Rate</div>
+                    <div class="efficiency-bar">
+                        <div class="efficiency-fill savings" style="width: ${efficiency.savingsRate}%"></div>
+                    </div>
+                    <div class="efficiency-value">${efficiency.savingsRate.toFixed(1)}%</div>
+                </div>
+                <div class="efficiency-metrics">
+                    <div class="metric">
+                        <span class="metric-label">Over Budget Trips:</span>
+                        <span class="metric-value">${efficiency.overBudgetTrips}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Under Budget Trips:</span>
+                        <span class="metric-value">${efficiency.underBudgetTrips}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    updateMonthlySpending() {
+        const container = document.getElementById('monthly-spending-chart');
+        if (!container) return;
+
+        const monthlyData = this.calculateMonthlySpending();
+        
+        if (monthlyData.length === 0) {
+            container.innerHTML = `
+                <div class="no-data">
+                    <i class="fas fa-chart-bar"></i>
+                    <p>No spending data available</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = `
+            <div class="monthly-chart">
+                ${monthlyData.map(month => `
+                    <div class="month-bar">
+                        <div class="month-label">${month.month}</div>
+                        <div class="month-amount">${this.formatCurrency(month.amount)}</div>
+                        <div class="month-visual">
+                            <div class="month-fill" style="height: ${month.percentage}%"></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    getAllExpenses() {
+        const allExpenses = [];
+        this.trips.forEach(trip => {
+            trip.expenses.forEach(expense => {
+                allExpenses.push({
+                    ...expense,
+                    tripId: trip.id,
+                    tripName: trip.name
+                });
+            });
+        });
+        return allExpenses;
+    }
+
+    calculateSpendingTrends(expenses) {
+        const tripTotals = {};
+        this.trips.forEach(trip => {
+            const tripTotal = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            tripTotals[trip.name] = tripTotal;
+        });
+
+        const tripSpending = Object.entries(tripTotals).map(([name, amount]) => ({ name, amount }));
+        const totalSpent = tripSpending.reduce((sum, trip) => sum + trip.amount, 0);
+        const averagePerTrip = tripSpending.length > 0 ? totalSpent / tripSpending.length : 0;
+        const mostExpensive = Math.max(...tripSpending.map(trip => trip.amount), 0);
+
+        return {
+            tripSpending,
+            averagePerTrip,
+            mostExpensive,
+            totalTrips: tripSpending.length
+        };
+    }
+
+    generateTrendChart(tripSpending) {
+        if (tripSpending.length === 0) return '<p class="no-data">No spending data</p>';
+        
+        const maxAmount = Math.max(...tripSpending.map(trip => trip.amount));
+        
+        return tripSpending.map(trip => `
+            <div class="trend-bar">
+                <div class="trend-label">${trip.name}</div>
+                <div class="trend-visual">
+                    <div class="trend-fill" style="width: ${(trip.amount / maxAmount) * 100}%"></div>
+                </div>
+                <div class="trend-amount">${this.formatCurrency(trip.amount)}</div>
+            </div>
+        `).join('');
+    }
+
+    calculateBudgetEfficiency() {
+        let totalBudget = 0;
+        let totalSpent = 0;
+        let overBudgetTrips = 0;
+        let underBudgetTrips = 0;
+
+        this.trips.forEach(trip => {
+            totalBudget += trip.budget;
+            const tripSpent = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            totalSpent += tripSpent;
+            
+            if (tripSpent > trip.budget) {
+                overBudgetTrips++;
+            } else if (tripSpent < trip.budget) {
+                underBudgetTrips++;
+            }
+        });
+
+        const utilization = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+        const savingsRate = totalBudget > 0 ? ((totalBudget - totalSpent) / totalBudget) * 100 : 0;
+
+        return {
+            utilization: Math.min(utilization, 100),
+            savingsRate: Math.max(savingsRate, 0),
+            overBudgetTrips,
+            underBudgetTrips
+        };
+    }
+
+    calculateMonthlySpending() {
+        const monthlyTotals = {};
+        
+        this.trips.forEach(trip => {
+            trip.expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const monthKey = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                
+                if (!monthlyTotals[monthKey]) {
+                    monthlyTotals[monthKey] = 0;
+                }
+                monthlyTotals[monthKey] += expense.amount;
+            });
+        });
+
+        // Convert to array with proper date sorting
+        const monthlyData = Object.entries(monthlyTotals)
+            .map(([month, amount]) => {
+                // Parse the month string back to a date for proper sorting
+                const [monthName, year] = month.split(' ');
+                const monthIndex = new Date(`${monthName} 1, ${year}`).getMonth();
+                const fullDate = new Date(year, monthIndex);
+                
+                return { 
+                    month, 
+                    amount, 
+                    sortDate: fullDate 
+                };
+            })
+            .sort((a, b) => a.sortDate - b.sortDate)
+            .slice(-6) // Last 6 months
+            .map(({ month, amount }) => ({ month, amount })); // Remove sortDate
+
+        const maxAmount = Math.max(...monthlyData.map(month => month.amount), 1);
+        
+        return monthlyData.map(month => ({
+            ...month,
+            percentage: (month.amount / maxAmount) * 100
+        }));
+    }
+
+    getTripName(tripId) {
+        const trip = this.trips.find(t => t.id === tripId);
+        return trip ? trip.name : 'Unknown Trip';
+    }
+
+    // Photo Storage Management
+    getStorageUsage() {
+        const photos = this.photos;
+        const totalSize = photos.reduce((sum, photo) => sum + photo.size, 0);
+        const totalPhotos = photos.length;
+        const averageSize = totalPhotos > 0 ? totalSize / totalPhotos : 0;
+        
+        return {
+            totalSize: totalSize,
+            totalPhotos: totalPhotos,
+            averageSize: averageSize,
+            storageUsed: this.formatFileSize(totalSize),
+            averageSizeFormatted: this.formatFileSize(averageSize)
+        };
+    }
+
+    cleanupOldPhotos() {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        
+        const oldPhotos = this.photos.filter(photo => 
+            new Date(photo.date) < thirtyDaysAgo
+        );
+        
+        if (oldPhotos.length > 0) {
+            const confirmCleanup = confirm(
+                `Found ${oldPhotos.length} photos older than 30 days. ` +
+                `This will free up ${this.formatFileSize(
+                    oldPhotos.reduce((sum, photo) => sum + photo.size, 0)
+                )} of storage. Remove old photos?`
+            );
+            
+            if (confirmCleanup) {
+                this.photos = this.photos.filter(photo => 
+                    new Date(photo.date) >= thirtyDaysAgo
+                );
+                this.savePhotos();
+                this.showNotification(`${oldPhotos.length} old photos removed!`, 'success');
+                return true;
+            }
+        } else {
+            this.showNotification('No old photos found to clean up.', 'info');
+        }
+        return false;
+    }
+
+    exportPhotos() {
+        const photos = this.photos;
+        if (photos.length === 0) {
+            this.showNotification('No photos to export', 'info');
+            return;
+        }
+
+        // Create a zip-like structure for export
+        const exportData = {
+            photos: photos.map(photo => ({
+                id: photo.id,
+                tripId: photo.tripId,
+                tripName: this.getTripName(photo.tripId),
+                caption: photo.caption,
+                date: photo.date,
+                fileName: photo.fileName,
+                size: photo.size,
+                originalSize: photo.originalSize || photo.size
+            })),
+            exportDate: new Date().toISOString(),
+            totalPhotos: photos.length,
+            totalSize: photos.reduce((sum, photo) => sum + photo.size, 0)
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `travel-photos-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showNotification('Photo metadata exported successfully!', 'success');
+    }
+
+    showStorageInfo() {
+        const usage = this.getStorageUsage();
+        const firebaseCapacity = this.calculateFirebaseCapacity();
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'storage-info-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-hdd"></i> Photo Storage Information</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="storage-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Total Photos:</span>
+                            <span class="stat-value">${usage.totalPhotos}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Local Storage Used:</span>
+                            <span class="stat-value">${usage.storageUsed}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Average Photo Size:</span>
+                            <span class="stat-value">${usage.averageSizeFormatted}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Firebase Capacity:</span>
+                            <span class="stat-value">${firebaseCapacity.maxPhotos.toLocaleString()} photos</span>
+                        </div>
+                    </div>
+                    <div class="firebase-stats">
+                        <h4><i class="fas fa-cloud"></i> Firebase Storage Analysis</h4>
+                        <div class="stat-item">
+                            <span class="stat-label">Metadata per photo:</span>
+                            <span class="stat-value">~${firebaseCapacity.metadataSize} bytes</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Free tier storage:</span>
+                            <span class="stat-value">1 GB</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Photos without images:</span>
+                            <span class="stat-value">${firebaseCapacity.maxPhotos.toLocaleString()}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Current usage:</span>
+                            <span class="stat-value">${firebaseCapacity.currentUsage} bytes</span>
+                        </div>
+                    </div>
+                    <div class="storage-actions">
+                        <button class="btn btn-primary" onclick="travelPlanner.cleanupOldPhotos(); this.closest('.modal').remove()">
+                            <i class="fas fa-broom"></i> Clean Old Photos
+                        </button>
+                        <button class="btn btn-secondary" onclick="travelPlanner.exportPhotos(); this.closest('.modal').remove()">
+                            <i class="fas fa-download"></i> Export Photo Data
+                        </button>
+                    </div>
+                    <div class="storage-info">
+                        <h4>Storage Details:</h4>
+                        <ul>
+                            <li><strong>Hybrid Storage:</strong> Images stored locally (Base64), metadata in Firebase</li>
+                            <li><strong>Firebase Benefits:</strong> Cross-device sync, unlimited metadata storage</li>
+                            <li><strong>Local Benefits:</strong> Fast loading, offline access, no API costs</li>
+                            <li><strong>Capacity:</strong> ${firebaseCapacity.maxPhotos.toLocaleString()} photo records in Firebase</li>
+                            <li><strong>Images:</strong> Stored locally for performance, metadata synced to cloud</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    calculateFirebaseCapacity() {
+        // Firebase Firestore free tier: 1GB storage
+        const freeTierBytes = 1024 * 1024 * 1024; // 1GB
+        
+        // Estimated metadata size per photo (without image data)
+        const metadataSize = 150; // bytes per photo record
+        
+        // Current usage
+        const currentUsage = this.photos.length * metadataSize;
+        
+        // Maximum photos possible
+        const maxPhotos = Math.floor(freeTierBytes / metadataSize);
+        
+        return {
+            maxPhotos: maxPhotos,
+            metadataSize: metadataSize,
+            currentUsage: currentUsage,
+            freeTierBytes: freeTierBytes
+        };
+    }
+
+    // Authentication Methods
+    setupAuth() {
+        // Listen for authentication state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log('User signed in:', user.email);
+                this.showApp();
+                this.loadUserData();
+            } else {
+                console.log('User signed out');
+                this.showLogin();
+            }
+        });
+    }
+
+    showLogin() {
+        // Redirect to separate login page
+        window.location.href = 'login.html';
+    }
+
+    showApp() {
+        // User is authenticated, show the app
+        document.getElementById('main-content').style.display = 'block';
+    }
+
+    async handleSignOut() {
+        try {
+            await signOut(auth);
+            this.showNotification('Signed out successfully', 'success');
+        } catch (error) {
+            console.error('Sign out error:', error);
+            this.showNotification('Error signing out', 'error');
+        }
+    }
+
+    loadUserData() {
+        // Load user-specific data from Firebase
+        console.log('Loading user data...');
+        // This will be implemented when we add Firebase data sync
+    }
+
+    showLoading(message = 'Loading...') {
+        // Create or update loading indicator
+        let loading = document.getElementById('loading-indicator');
+        if (!loading) {
+            loading = document.createElement('div');
+            loading.id = 'loading-indicator';
+            loading.className = 'loading-overlay';
+            loading.innerHTML = `
+                <div class="loading-content">
+                    <div class="loading-spinner"></div>
+                    <p>${message}</p>
+                </div>
+            `;
+            document.body.appendChild(loading);
+        } else {
+            loading.querySelector('p').textContent = message;
+        }
+        loading.style.display = 'flex';
+    }
+
+    hideLoading() {
+        const loading = document.getElementById('loading-indicator');
+        if (loading) {
+            loading.style.display = 'none';
+        }
+    }
+
+    showTerms() {
+        alert('Terms of Service: By using Bradley\'s Travel Planner, you agree to our terms of service. This is a demo application.');
+    }
+
+    showPrivacy() {
+        alert('Privacy Policy: Your data is stored securely and will not be shared with third parties. This is a demo application.');
+    }
 }
 
 // Global functions for HTML onclick handlers
-let travelPlanner;
 
-function showSection(sectionName) {
-    travelPlanner.showSection(sectionName);
+// Make signOut available immediately
+function handleSignOut() {
+    if (travelPlanner) {
+        travelPlanner.handleSignOut();
+    } else {
+        console.log('TravelPlanner not initialized yet');
+    }
 }
 
+
 function showCreateTripModal() {
-    travelPlanner.showCreateTripModal();
+    if (travelPlanner) {
+        travelPlanner.showCreateTripModal();
+    }
 }
 
 function closeCreateTripModal() {
-    travelPlanner.closeCreateTripModal();
+    if (travelPlanner) {
+        travelPlanner.closeCreateTripModal();
+    }
 }
 
 function closeTripDetailsModal() {
-    travelPlanner.closeTripDetailsModal();
+    if (travelPlanner) {
+        travelPlanner.closeTripDetailsModal();
+    }
 }
 
 function createTrip(event) {
-    travelPlanner.createTrip(event);
+    if (travelPlanner) {
+        travelPlanner.createTrip(event);
+    }
 }
 
 function updateCurrency(currency) {
-    travelPlanner.updateCurrency(currency);
+    if (travelPlanner) {
+        travelPlanner.updateCurrency(currency);
+    }
 }
 
 function exportData() {
-    travelPlanner.exportData();
+    if (travelPlanner) {
+        travelPlanner.exportData();
+    }
 }
 
 function clearAllData() {
-    travelPlanner.clearAllData();
+    if (travelPlanner) {
+        travelPlanner.clearAllData();
+    }
 }
 
 
 function closeCreatePackingListModal() {
-    travelPlanner.closeCreatePackingListModal();
+    if (travelPlanner) {
+        travelPlanner.closeCreatePackingListModal();
+    }
 }
 
 function closeAddDocumentModal() {
-    travelPlanner.closeAddDocumentModal();
+    if (travelPlanner) {
+        travelPlanner.closeAddDocumentModal();
+    }
 }
 
+// Cleanup when page unloads
+window.addEventListener('beforeunload', () => {
+    if (travelPlanner) {
+        travelPlanner.cleanup();
+    }
+});
+
 function closeWeatherModal() {
-    travelPlanner.closeWeatherModal();
+    if (travelPlanner) {
+        travelPlanner.closeWeatherModal();
+    }
 }
 
 function showTripTemplates() {
-    console.log('🎯 showTripTemplates called');
-    if (typeof travelPlanner === 'undefined') {
-        console.error('❌ travelPlanner not initialized yet');
-        return;
+    if (travelPlanner) {
+        travelPlanner.showTripTemplates();
     }
-    travelPlanner.showTripTemplates();
 }
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     travelPlanner = new TravelPlanner();
+    
+    // Make TravelPlanner available globally for HTML onclick handlers
+    window.TravelPlanner = TravelPlanner;
+    window.travelPlanner = travelPlanner;
     
     // Add CSS animations
     const style = document.createElement('style');
@@ -2756,3 +4438,114 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     document.head.appendChild(style);
 });
+
+
+// Make all functions available globally for HTML onclick handlers
+window.showSection = showSection;
+window.showCreateTripModal = showCreateTripModal;
+window.closeCreateTripModal = closeCreateTripModal;
+window.closeTripDetailsModal = closeTripDetailsModal;
+window.createTrip = createTrip;
+window.updateCurrency = updateCurrency;
+window.exportData = exportData;
+window.clearAllData = clearAllData;
+window.closeCreatePackingListModal = closeCreatePackingListModal;
+window.closeAddDocumentModal = closeAddDocumentModal;
+window.closeWeatherModal = closeWeatherModal;
+window.showTripTemplates = showTripTemplates;
+window.signOut = handleSignOut;
+window.toggleMobileMenu = toggleMobileMenu;
+window.showSearchSuggestions = function() {
+    if (travelPlanner) travelPlanner.showSearchSuggestions();
+};
+window.hideSearchSuggestions = function() {
+    if (travelPlanner) travelPlanner.hideSearchSuggestions();
+};
+window.clearSearch = function() {
+    if (travelPlanner) travelPlanner.clearSearch();
+};
+
+// Mobile menu toggle function
+function toggleMobileMenu() {
+    console.log('toggleMobileMenu called');
+    const nav = document.getElementById('main-nav');
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    
+    console.log('Nav element:', nav);
+    console.log('Toggle element:', toggle);
+    
+    if (nav && toggle) {
+        console.log('Before toggle - nav classes:', nav.className);
+        nav.classList.toggle('mobile-open');
+        console.log('After toggle - nav classes:', nav.className);
+        
+        // Update aria-expanded for accessibility
+        const isOpen = nav.classList.contains('mobile-open');
+        toggle.setAttribute('aria-expanded', isOpen);
+        
+        // Update icon
+        const icon = toggle.querySelector('i');
+        if (icon) {
+            icon.className = isOpen ? 'fas fa-times' : 'fas fa-bars';
+            console.log('Icon updated to:', icon.className);
+        }
+    } else {
+        console.error('Nav or toggle element not found');
+    }
+}
+
+// Close mobile menu when clicking outside
+document.addEventListener('click', (e) => {
+    const nav = document.getElementById('main-nav');
+    const toggle = document.querySelector('.mobile-menu-toggle');
+    
+    if (nav && toggle && nav.classList.contains('mobile-open')) {
+        if (!nav.contains(e.target) && !toggle.contains(e.target)) {
+            nav.classList.remove('mobile-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-bars';
+            }
+        }
+    }
+});
+
+// Close mobile menu when section is selected
+function showSection(sectionName) {
+    if (travelPlanner) {
+        travelPlanner.showSection(sectionName);
+        
+        // Close mobile menu on mobile devices
+        const nav = document.getElementById('main-nav');
+        const toggle = document.querySelector('.mobile-menu-toggle');
+        
+        if (nav && toggle && window.innerWidth <= 768) {
+            nav.classList.remove('mobile-open');
+            toggle.setAttribute('aria-expanded', 'false');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-bars';
+            }
+        }
+    } else {
+        console.log('TravelPlanner not initialized yet');
+    }
+}
+
+// PWA wrapper functions
+window.dismissInstallPrompt = function() {
+    if (window.travelPlanner) {
+        window.travelPlanner.dismissInstallPrompt();
+    } else {
+        console.log('TravelPlanner not initialized yet');
+    }
+};
+
+window.installApp = function() {
+    if (window.travelPlanner) {
+        window.travelPlanner.installApp();
+    } else {
+        console.log('TravelPlanner not initialized yet');
+    }
+};
