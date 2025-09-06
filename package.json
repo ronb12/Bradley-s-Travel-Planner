@@ -1,7 +1,7 @@
 {
   "name": "bradleys-travel-planner",
   "version": "1.0.0",
-  "description": "A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
+  "description": "Bradley's Travel Planner - A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
   "main": "index.html",
   "scripts": {
     "start": "npx http-server public -p 3000",
