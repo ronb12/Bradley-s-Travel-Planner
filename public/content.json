@@ -1,0 +1,129 @@
+{
+  "name": "Bradley's Travel Planner",
+  "short_name": "Travel Planner",
+  "description": "A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
+  "version": "1.0.0",
+  "author": "Bradley Virtual Solutions, LLC",
+  "homepage_url": "https://bradleys-travel-planner.web.app",
+  "repository_url": "https://github.com/ronb12/Bradley-s-Travel-Planner",
+  "license": "MIT",
+  "keywords": [
+    "travel",
+    "planner",
+    "itinerary",
+    "budget",
+    "trip",
+    "pwa",
+    "progressive-web-app"
+  ],
+  "categories": [
+    "travel",
+    "lifestyle",
+    "productivity"
+  ],
+  "features": [
+    "Trip Management",
+    "Budget Tracking",
+    "Packing Lists",
+    "Document Management",
+    "Calendar View",
+    "Offline Support",
+    "PWA Installation"
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/desktop-screenshot.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Desktop Dashboard View"
+    },
+    {
+      "src": "/screenshots/mobile-screenshot.png",
+      "sizes": "375x667",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile Trip View"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#667eea",
+  "background_color": "#667eea",
+  "lang": "en-US",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "shortcuts": [
+    {
+      "name": "Create New Trip",
+      "short_name": "New Trip",
+      "description": "Start planning your next adventure",
+      "url": "/?action=create-trip",
+      "icons": [
+        {
+          "src": "/icons/shortcut-new-trip.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "View Calendar",
+      "short_name": "Calendar",
+      "description": "See your trips in calendar format",
+      "url": "/?section=calendar",
+      "icons": [
+        {
+          "src": "/icons/shortcut-calendar.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Budget Tracker",
+      "short_name": "Budget",
+      "description": "Track your travel expenses",
+      "url": "/?section=budget",
+      "icons": [
+        {
+          "src": "/icons/shortcut-budget.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "protocol_handlers": [],
+  "file_handlers": [],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "created": "2024-01-15T00:00:00Z",
+  "updated": "2024-01-15T00:00:00Z"
+}

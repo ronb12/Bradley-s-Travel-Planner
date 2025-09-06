@@ -1,5 +1,5 @@
 
-<svg width="128" height="128" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
@@ -12,39 +12,36 @@
   </defs>
   
   <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#bg)" stroke="#ffffff" stroke-width="8"/>
+  <circle cx="64" cy="64" r="61.44" fill="url(#bg)" stroke="#ffffff" stroke-width="2.56"/>
   
-  <!-- Plane body -->
-  <ellipse cx="256" cy="256" rx="120" ry="40" fill="url(#plane)" transform="rotate(-15 256 256)"/>
+  <!-- Plane icon -->
+  <g transform="translate(64, 44.8)">
+    <!-- Plane body -->
+    <ellipse cx="0" cy="0" rx="30.72" ry="10.240000000000002" fill="url(#plane)" transform="rotate(-15)"/>
+    
+    <!-- Plane wings -->
+    <ellipse cx="-15.36" cy="-5.120000000000001" rx="20.480000000000004" ry="5.120000000000001" fill="url(#plane)" transform="rotate(-15)"/>
+    <ellipse cx="15.36" cy="-5.120000000000001" rx="20.480000000000004" ry="5.120000000000001" fill="url(#plane)" transform="rotate(-15)"/>
+    
+    <!-- Plane tail -->
+    <ellipse cx="-25.6" cy="-15.36" rx="7.68" ry="15.36" fill="url(#plane)" transform="rotate(-15)"/>
+    
+    <!-- Plane nose -->
+    <ellipse cx="25.6" cy="0" rx="5.120000000000001" ry="3.072" fill="url(#plane)" transform="rotate(-15)"/>
+    
+    <!-- Windows -->
+    <circle cx="-10.240000000000002" cy="-1.024" r="2.5600000000000005" fill="#667eea" opacity="0.8"/>
+    <circle cx="0" cy="-1.024" r="2.5600000000000005" fill="#667eea" opacity="0.8"/>
+    <circle cx="10.240000000000002" cy="-1.024" r="2.5600000000000005" fill="#667eea" opacity="0.8"/>
+  </g>
   
-  <!-- Plane wings -->
-  <ellipse cx="200" cy="240" rx="80" ry="20" fill="url(#plane)" transform="rotate(-15 200 240)"/>
-  <ellipse cx="312" cy="240" rx="80" ry="20" fill="url(#plane)" transform="rotate(-15 312 240)"/>
+  <!-- App Name Text -->
+  <text x="64" y="96" text-anchor="middle" font-family="Arial, sans-serif" font-size="10.24" font-weight="bold" fill="white">
+    Bradley's Travel Planner
+  </text>
   
-  <!-- Plane tail -->
-  <ellipse cx="180" cy="200" rx="30" ry="60" fill="url(#plane)" transform="rotate(-15 180 200)"/>
-  
-  <!-- Plane nose -->
-  <ellipse cx="320" cy="256" rx="25" ry="15" fill="url(#plane)" transform="rotate(-15 320 256)"/>
-  
-  <!-- Windows -->
-  <circle cx="220" cy="250" r="8" fill="#667eea" opacity="0.7"/>
-  <circle cx="250" cy="250" r="8" fill="#667eea" opacity="0.7"/>
-  <circle cx="280" cy="250" r="8" fill="#667eea" opacity="0.7"/>
-  
-  <!-- Cloud 1 -->
-  <ellipse cx="150" cy="150" rx="30" ry="15" fill="rgba(255,255,255,0.3)"/>
-  <ellipse cx="170" cy="150" rx="25" ry="12" fill="rgba(255,255,255,0.3)"/>
-  <ellipse cx="130" cy="150" rx="20" ry="10" fill="rgba(255,255,255,0.3)"/>
-  
-  <!-- Cloud 2 -->
-  <ellipse cx="350" cy="350" rx="25" ry="12" fill="rgba(255,255,255,0.3)"/>
-  <ellipse cx="370" cy="350" rx="20" ry="10" fill="rgba(255,255,255,0.3)"/>
-  <ellipse cx="330" cy="350" rx="15" ry="8" fill="rgba(255,255,255,0.3)"/>
-  
-  <!-- Compass needle -->
-  <circle cx="256" cy="256" r="15" fill="#ffffff" opacity="0.9"/>
-  <line x1="256" y1="240" x2="256" y2="272" stroke="#667eea" stroke-width="3" stroke-linecap="round"/>
-  <line x1="240" y1="256" x2="272" y2="256" stroke="#667eea" stroke-width="3" stroke-linecap="round"/>
-  <circle cx="256" cy="256" r="3" fill="#667eea"/>
+  <!-- Decorative elements -->
+  <circle cx="25.6" cy="25.6" r="3.84" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="102.4" cy="102.4" r="2.56" fill="rgba(255,255,255,0.3)"/>
+  <circle cx="19.2" cy="108.8" r="3.2" fill="rgba(255,255,255,0.3)"/>
 </svg>
