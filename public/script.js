@@ -15,6 +15,7 @@ class TravelPlanner {
     }
 
     init() {
+        console.log('🚀 Bradley\'s Travel Planner - A+ Features Loading...');
         this.setupEventListeners();
         this.updateDashboard();
         this.updateTripsDisplay();
@@ -26,6 +27,7 @@ class TravelPlanner {
         this.registerServiceWorker();
         this.setupPWA();
         this.hideSplashScreen();
+        console.log('✅ A+ Features Loaded: Weather, Export, Templates');
     }
 
     setupEventListeners() {
@@ -327,16 +329,37 @@ class TravelPlanner {
                     </div>
                 </div>
 
+                <div class="weather-section">
+                    <h4><i class="fas fa-cloud-sun"></i> Weather Forecast</h4>
+                    <div id="weather-forecast-${trip.id}" class="weather-forecast">
+                        <div class="weather-loading">
+                            <i class="fas fa-spinner fa-spin"></i> Loading weather...
+                        </div>
+                    </div>
+                </div>
+
                 ${trip.notes ? `
                     <div class="notes-section">
                         <h4>Notes</h4>
                         <p>${trip.notes}</p>
                     </div>
                 ` : ''}
+                
+                <div class="trip-actions">
+                    <button class="btn btn-secondary" onclick="travelPlanner.exportTripPDF('${trip.id}')">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </button>
+                    <button class="btn btn-secondary" onclick="travelPlanner.exportTripCSV('${trip.id}')">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </button>
+                </div>
             </div>
         `;
 
         modal.classList.add('active');
+        
+        // Load weather data
+        this.loadWeatherForecast(trip);
     }
 
     addExpense(tripId) {
@@ -490,9 +513,1059 @@ class TravelPlanner {
         this.showNotification('Sample data loaded successfully!', 'success');
     }
 
+    // Weather Integration
+    async loadWeatherForecast(trip) {
+        try {
+            const weatherContainer = document.getElementById(`weather-forecast-${trip.id}`);
+            if (!weatherContainer) {
+                console.log('❌ Weather container not found');
+                return;
+            }
+            console.log('🌤️ Loading weather forecast for trip:', trip.destination);
+
+            // Extract city from destination (simple parsing)
+            const city = trip.destination.split(',')[0].trim();
+            const startDate = new Date(trip.startDate);
+            const endDate = new Date(trip.endDate);
+            
+            // For demo purposes, we'll show mock weather data
+            // In production, you'd use a real weather API like OpenWeatherMap
+            const mockWeather = this.generateMockWeather(city, startDate, endDate);
+            
+            weatherContainer.innerHTML = `
+                <div class="weather-cards">
+                    ${mockWeather.map(day => `
+                        <div class="weather-card">
+                            <div class="weather-date">${day.date}</div>
+                            <div class="weather-icon">${day.icon}</div>
+                            <div class="weather-temp">${day.temp}°F</div>
+                            <div class="weather-desc">${day.description}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } catch (error) {
+            console.error('Error loading weather:', error);
+            const weatherContainer = document.getElementById(`weather-forecast-${trip.id}`);
+            if (weatherContainer) {
+                weatherContainer.innerHTML = '<p class="weather-error">Weather data unavailable</p>';
+            }
+        }
+    }
+
+    generateMockWeather(city, startDate, endDate) {
+        const weatherIcons = ['☀️', '⛅', '🌧️', '⛈️', '❄️', '🌤️'];
+        const descriptions = ['Sunny', 'Partly Cloudy', 'Rainy', 'Stormy', 'Snowy', 'Cloudy'];
+        const days = [];
+        
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const randomIcon = weatherIcons[Math.floor(Math.random() * weatherIcons.length)];
+            const randomDesc = descriptions[Math.floor(Math.random() * descriptions.length)];
+            const randomTemp = Math.floor(Math.random() * 30) + 60; // 60-90°F
+            
+            days.push({
+                date: d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+                icon: randomIcon,
+                temp: randomTemp,
+                description: randomDesc
+            });
+        }
+        
+        return days;
+    }
+
+    // Export Functionality
+    exportTripPDF(tripId) {
+        const trip = this.trips.find(t => t.id === tripId);
+        if (!trip) return;
+
+        try {
+            // Check if jsPDF is available
+            if (typeof window.jspdf === 'undefined') {
+                this.showNotification('PDF library not loaded. Please refresh the page and try again.', 'error');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Set up fonts and colors
+            doc.setFont('helvetica');
+            doc.setFontSize(20);
+            doc.setTextColor(102, 126, 234); // Brand color
+            
+            // Title
+            doc.text('Bradley\'s Travel Planner', 20, 30);
+            doc.setFontSize(16);
+            doc.text('Trip Itinerary', 20, 40);
+            
+            // Company tagline
+            doc.setFontSize(10);
+            doc.setTextColor(100, 100, 100);
+            doc.text('A product of Bradley Virtual Solutions, LLC', 20, 50);
+            
+            // Trip details
+            doc.setFontSize(12);
+            doc.setTextColor(0, 0, 0);
+            let yPosition = 70;
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text('Trip Details:', 20, yPosition);
+            yPosition += 10;
+            
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Trip Name: ${trip.name}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Destination: ${trip.destination}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Type: ${trip.type}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Dates: ${this.formatDate(trip.startDate)} - ${this.formatDate(trip.endDate)}`, 20, yPosition);
+            yPosition += 8;
+            doc.text(`Budget: ${this.formatCurrency(trip.budget)}`, 20, yPosition);
+            yPosition += 15;
+            
+            // Expenses section
+            if (trip.expenses && trip.expenses.length > 0) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('Expenses:', 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFont('helvetica', 'normal');
+                trip.expenses.forEach(expense => {
+                    if (yPosition > 250) { // Check if we need a new page
+                        doc.addPage();
+                        yPosition = 20;
+                    }
+                    doc.text(`• ${expense.description}: ${this.formatCurrency(expense.amount)}`, 25, yPosition);
+                    yPosition += 6;
+                });
+                
+                yPosition += 10;
+                
+                // Totals
+                const totalSpent = trip.expenses.reduce((sum, expense) => sum + expense.amount, 0);
+                const remaining = trip.budget - totalSpent;
+                
+                doc.setFont('helvetica', 'bold');
+                doc.text(`Total Spent: ${this.formatCurrency(totalSpent)}`, 20, yPosition);
+                yPosition += 8;
+                doc.text(`Remaining: ${this.formatCurrency(remaining)}`, 20, yPosition);
+                yPosition += 15;
+            }
+            
+            // Notes section
+            if (trip.notes) {
+                doc.setFont('helvetica', 'bold');
+                doc.text('Notes:', 20, yPosition);
+                yPosition += 10;
+                
+                doc.setFont('helvetica', 'normal');
+                // Split long notes into multiple lines
+                const splitNotes = doc.splitTextToSize(trip.notes, 170);
+                doc.text(splitNotes, 20, yPosition);
+            }
+            
+            // Footer
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+                doc.text(`Generated on ${new Date().toLocaleDateString()}`, doc.internal.pageSize.width - 80, doc.internal.pageSize.height - 10);
+            }
+            
+            // Save the PDF
+            const fileName = `${trip.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_itinerary.pdf`;
+            doc.save(fileName);
+            
+            this.showNotification('Trip itinerary exported as PDF successfully!', 'success');
+            
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            this.showNotification('Error generating PDF. Please try again.', 'error');
+        }
+    }
+
+    exportTripCSV(tripId) {
+        const trip = this.trips.find(t => t.id === tripId);
+        if (!trip) return;
+
+        const csvContent = [
+            ['Trip Name', 'Destination', 'Type', 'Start Date', 'End Date', 'Budget', 'Description', 'Amount', 'Category'],
+            [trip.name, trip.destination, trip.type, trip.startDate, trip.endDate, trip.budget, '', '', ''],
+            ...trip.expenses.map(expense => ['', '', '', '', '', '', expense.description, expense.amount, expense.category])
+        ].map(row => row.join(',')).join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${trip.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_expenses.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showNotification('Trip expenses exported to CSV!', 'success');
+    }
+
+    // Trip Templates
+    getTripTemplates() {
+        return [
+            // Popular US Destinations
+            {
+                id: 'template_nyc',
+                name: 'New York City Weekend',
+                destination: 'New York City, USA',
+                type: 'Leisure',
+                duration: 3,
+                budget: 800,
+                description: 'The city that never sleeps - perfect for a quick urban escape',
+                highlights: ['Central Park', 'Broadway Show', 'Times Square', 'Brooklyn Bridge', 'Statue of Liberty'],
+                estimatedCosts: {
+                    'Flight': 300,
+                    'Hotel': 200,
+                    'Food': 150,
+                    'Activities': 100,
+                    'Transportation': 50
+                }
+            },
+            {
+                id: 'template_los_angeles',
+                name: 'Los Angeles Adventure',
+                destination: 'Los Angeles, USA',
+                type: 'Leisure',
+                duration: 5,
+                budget: 1200,
+                description: 'Hollywood, beaches, and endless sunshine',
+                highlights: ['Hollywood Walk of Fame', 'Santa Monica Pier', 'Griffith Observatory', 'Venice Beach', 'Universal Studios'],
+                estimatedCosts: {
+                    'Flight': 400,
+                    'Hotel': 400,
+                    'Food': 200,
+                    'Activities': 150,
+                    'Transportation': 50
+                }
+            },
+            {
+                id: 'template_miami',
+                name: 'Miami Beach Paradise',
+                destination: 'Miami, USA',
+                type: 'Leisure',
+                duration: 4,
+                budget: 1000,
+                description: 'Tropical vibes, art deco, and vibrant nightlife',
+                highlights: ['South Beach', 'Art Deco District', 'Wynwood Walls', 'Everglades', 'Little Havana'],
+                estimatedCosts: {
+                    'Flight': 350,
+                    'Hotel': 300,
+                    'Food': 200,
+                    'Activities': 100,
+                    'Transportation': 50
+                }
+            },
+            {
+                id: 'template_las_vegas',
+                name: 'Las Vegas Experience',
+                destination: 'Las Vegas, USA',
+                type: 'Leisure',
+                duration: 3,
+                budget: 900,
+                description: 'Entertainment capital with shows, casinos, and dining',
+                highlights: ['The Strip', 'Bellagio Fountains', 'Fremont Street', 'Shows', 'Grand Canyon Day Trip'],
+                estimatedCosts: {
+                    'Flight': 300,
+                    'Hotel': 200,
+                    'Food': 200,
+                    'Activities': 150,
+                    'Transportation': 50
+                }
+            },
+            // International Destinations
+            {
+                id: 'template_paris',
+                name: 'Paris Romance',
+                destination: 'Paris, France',
+                type: 'Leisure',
+                duration: 7,
+                budget: 2500,
+                description: 'The City of Light - culture, cuisine, and romance',
+                highlights: ['Eiffel Tower', 'Louvre Museum', 'Notre Dame', 'Seine River Cruise', 'Montmartre'],
+                estimatedCosts: {
+                    'Flight': 800,
+                    'Hotel': 700,
+                    'Food': 400,
+                    'Activities': 300,
+                    'Transportation': 100,
+                    'Shopping': 200
+                }
+            },
+            {
+                id: 'template_london',
+                name: 'London Royal Tour',
+                destination: 'London, UK',
+                type: 'Leisure',
+                duration: 6,
+                budget: 2200,
+                description: 'Historic charm meets modern sophistication',
+                highlights: ['Big Ben', 'Tower of London', 'British Museum', 'West End Show', 'Hyde Park'],
+                estimatedCosts: {
+                    'Flight': 700,
+                    'Hotel': 600,
+                    'Food': 350,
+                    'Activities': 300,
+                    'Transportation': 100,
+                    'Shopping': 150
+                }
+            },
+            {
+                id: 'template_tokyo',
+                name: 'Tokyo Discovery',
+                destination: 'Tokyo, Japan',
+                type: 'Leisure',
+                duration: 8,
+                budget: 2800,
+                description: 'Futuristic metropolis with ancient traditions',
+                highlights: ['Senso-ji Temple', 'Shibuya Crossing', 'Tsukiji Market', 'Tokyo Skytree', 'Harajuku'],
+                estimatedCosts: {
+                    'Flight': 1000,
+                    'Hotel': 800,
+                    'Food': 400,
+                    'Activities': 300,
+                    'Transportation': 150,
+                    'Shopping': 150
+                }
+            },
+            {
+                id: 'template_rome',
+                name: 'Rome Eternal City',
+                destination: 'Rome, Italy',
+                type: 'Leisure',
+                duration: 5,
+                budget: 1800,
+                description: 'Ancient history and incredible Italian cuisine',
+                highlights: ['Colosseum', 'Vatican City', 'Trevi Fountain', 'Roman Forum', 'Trastevere'],
+                estimatedCosts: {
+                    'Flight': 600,
+                    'Hotel': 500,
+                    'Food': 300,
+                    'Activities': 200,
+                    'Transportation': 100,
+                    'Shopping': 100
+                }
+            },
+            // Beach Destinations
+            {
+                id: 'template_cancun',
+                name: 'Cancun Paradise',
+                destination: 'Cancun, Mexico',
+                type: 'Leisure',
+                duration: 5,
+                budget: 1200,
+                description: 'All-inclusive beach resort with Mayan culture',
+                highlights: ['Beach Resort', 'Chichen Itza', 'Snorkeling', 'Xcaret Park', 'Isla Mujeres'],
+                estimatedCosts: {
+                    'Flight': 400,
+                    'Resort': 500,
+                    'Activities': 200,
+                    'Food': 100
+                }
+            },
+            {
+                id: 'template_bali',
+                name: 'Bali Tropical Escape',
+                destination: 'Bali, Indonesia',
+                type: 'Leisure',
+                duration: 8,
+                budget: 1500,
+                description: 'Island paradise with temples and rice terraces',
+                highlights: ['Ubud Rice Terraces', 'Tegallalang', 'Uluwatu Temple', 'Seminyak Beach', 'Mount Batur'],
+                estimatedCosts: {
+                    'Flight': 600,
+                    'Hotel': 400,
+                    'Food': 200,
+                    'Activities': 200,
+                    'Transportation': 100
+                }
+            },
+            // Adventure Destinations
+            {
+                id: 'template_iceland',
+                name: 'Iceland Adventure',
+                destination: 'Reykjavik, Iceland',
+                type: 'Adventure',
+                duration: 7,
+                budget: 2000,
+                description: 'Land of fire and ice with incredible natural wonders',
+                highlights: ['Northern Lights', 'Blue Lagoon', 'Golden Circle', 'Glacier Hiking', 'Waterfalls'],
+                estimatedCosts: {
+                    'Flight': 500,
+                    'Hotel': 600,
+                    'Food': 300,
+                    'Activities': 400,
+                    'Transportation': 200
+                }
+            },
+            // Business Destinations
+            {
+                id: 'template_san_francisco',
+                name: 'San Francisco Tech',
+                destination: 'San Francisco, USA',
+                type: 'Business',
+                duration: 4,
+                budget: 1500,
+                description: 'Tech hub with innovation and networking',
+                highlights: ['Golden Gate Bridge', 'Alcatraz', 'Silicon Valley', 'Fisherman\'s Wharf', 'Cable Cars'],
+                estimatedCosts: {
+                    'Flight': 400,
+                    'Hotel': 600,
+                    'Conference': 300,
+                    'Food': 150,
+                    'Transportation': 50
+                }
+            },
+            {
+                id: 'template_singapore',
+                name: 'Singapore Business',
+                destination: 'Singapore',
+                type: 'Business',
+                duration: 5,
+                budget: 1800,
+                description: 'Global business hub with multicultural charm',
+                highlights: ['Marina Bay Sands', 'Gardens by the Bay', 'Chinatown', 'Sentosa Island', 'Hawker Centers'],
+                estimatedCosts: {
+                    'Flight': 600,
+                    'Hotel': 500,
+                    'Food': 200,
+                    'Activities': 300,
+                    'Transportation': 100,
+                    'Shopping': 200
+                }
+            }
+        ];
+    }
+
+    showTripTemplates() {
+        console.log('🎯 Opening Trip Templates...');
+        const templates = this.getTripTemplates();
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'trip-templates-modal';
+        modal.innerHTML = `
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-magic"></i> Trip Templates</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="templates-intro">
+                        <p>Choose from our curated trip templates to get started quickly:</p>
+                        <div class="template-search">
+                            <input type="text" id="template-search" placeholder="Search destinations or trip types..." onkeyup="travelPlanner.filterTemplates()">
+                            <select id="template-type-filter" onchange="travelPlanner.filterTemplates()">
+                                <option value="">All Types</option>
+                                <option value="Leisure">Leisure</option>
+                                <option value="Business">Business</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Family">Family</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Honeymoon">Honeymoon</option>
+                                <option value="Solo">Solo Travel</option>
+                                <option value="Group">Group Travel</option>
+                                <option value="Backpacking">Backpacking</option>
+                                <option value="Luxury">Luxury</option>
+                                <option value="Budget">Budget</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Religious">Religious/Pilgrimage</option>
+                                <option value="Sports">Sports/Active</option>
+                                <option value="Wellness">Wellness/Health</option>
+                                <option value="Educational">Educational</option>
+                                <option value="Volunteer">Volunteer</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="templates-grid" id="templates-grid">
+                        ${templates.map(template => `
+                            <div class="template-card">
+                                <div class="template-header">
+                                    <h4>${template.name}</h4>
+                                    <div class="template-destination">${template.destination}</div>
+                                </div>
+                                <div class="template-details">
+                                    <div class="template-duration">
+                                        <i class="fas fa-calendar"></i> ${template.duration} days
+                                    </div>
+                                    <div class="template-budget">
+                                        <i class="fas fa-dollar-sign"></i> ${this.formatCurrency(template.budget)}
+                                    </div>
+                                    <div class="template-type">
+                                        <i class="fas fa-tag"></i> ${template.type}
+                                    </div>
+                                </div>
+                                <div class="template-description">
+                                    ${template.description}
+                                </div>
+                                <div class="template-highlights">
+                                    <strong>Highlights:</strong>
+                                    <div class="highlights-list">
+                                        ${template.highlights.map(highlight => `<span class="highlight-tag">${highlight}</span>`).join('')}
+                                    </div>
+                                </div>
+                                <div class="template-costs">
+                                    <strong>Estimated Costs:</strong>
+                                    <div class="costs-breakdown">
+                                        ${Object.entries(template.estimatedCosts).map(([category, amount]) => 
+                                            `<div class="cost-item">
+                                                <span>${category}</span>
+                                                <span>${this.formatCurrency(amount)}</span>
+                                            </div>`
+                                        ).join('')}
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary template-use-btn" onclick="event.stopPropagation(); travelPlanner.createFromTemplate('${template.id}')">
+                                    <i class="fas fa-plus"></i> Use This Template
+                                </button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="template-advanced-options">
+                        <h4>Advanced Options</h4>
+                        <div class="template-actions">
+                            <button class="btn btn-secondary" onclick="travelPlanner.showAITemplateGenerator()">
+                                <i class="fas fa-robot"></i> AI Generate Template
+                            </button>
+                            <button class="btn btn-secondary" onclick="travelPlanner.showCreateTemplate()">
+                                <i class="fas fa-plus"></i> Create Custom Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+        console.log('✅ Trip Templates Modal Created and Added to DOM');
+    }
+
+    filterTemplates() {
+        const searchTerm = document.getElementById('template-search').value.toLowerCase();
+        const typeFilter = document.getElementById('template-type-filter').value;
+        const templates = this.getTripTemplates();
+        
+        const filteredTemplates = templates.filter(template => {
+            const matchesSearch = template.name.toLowerCase().includes(searchTerm) || 
+                                template.destination.toLowerCase().includes(searchTerm) ||
+                                template.description.toLowerCase().includes(searchTerm);
+            const matchesType = !typeFilter || template.type === typeFilter;
+            return matchesSearch && matchesType;
+        });
+        
+        const grid = document.getElementById('templates-grid');
+        if (grid) {
+            grid.innerHTML = filteredTemplates.map(template => `
+                <div class="template-card">
+                    <div class="template-header">
+                        <h4>${template.name}</h4>
+                        <div class="template-destination">${template.destination}</div>
+                    </div>
+                    <div class="template-details">
+                        <div class="template-duration">
+                            <i class="fas fa-calendar"></i> ${template.duration} days
+                        </div>
+                        <div class="template-budget">
+                            <i class="fas fa-dollar-sign"></i> ${this.formatCurrency(template.budget)}
+                        </div>
+                        <div class="template-type">
+                            <i class="fas fa-tag"></i> ${template.type}
+                        </div>
+                    </div>
+                    <div class="template-description">
+                        ${template.description}
+                    </div>
+                    <div class="template-highlights">
+                        <strong>Highlights:</strong>
+                        <div class="highlights-list">
+                            ${template.highlights.map(highlight => `<span class="highlight-tag">${highlight}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="template-costs">
+                        <strong>Estimated Costs:</strong>
+                        <div class="costs-breakdown">
+                            ${Object.entries(template.estimatedCosts).map(([category, amount]) => 
+                                `<div class="cost-item">
+                                    <span>${category}</span>
+                                    <span>${this.formatCurrency(amount)}</span>
+                                </div>`
+                            ).join('')}
+                        </div>
+                    </div>
+                    <button class="btn btn-primary template-use-btn" onclick="event.stopPropagation(); travelPlanner.createFromTemplate('${template.id}')">
+                        <i class="fas fa-plus"></i> Use This Template
+                    </button>
+                </div>
+            `).join('');
+        }
+    }
+
+    createFromTemplate(templateId) {
+        console.log('🎯 Creating trip from template:', templateId);
+        const templates = this.getTripTemplates();
+        const template = templates.find(t => t.id === templateId);
+        if (!template) {
+            console.log('❌ Template not found:', templateId);
+            return;
+        }
+        console.log('✅ Template found:', template.name);
+
+        // Pre-fill the create trip form with template data
+        const tripNameField = document.getElementById('trip-name');
+        const destinationField = document.getElementById('destination');
+        const tripTypeField = document.getElementById('trip-type');
+        const budgetField = document.getElementById('budget');
+        
+        if (tripNameField) tripNameField.value = template.name;
+        if (destinationField) destinationField.value = template.destination;
+        if (tripTypeField) tripTypeField.value = template.type;
+        if (budgetField) budgetField.value = template.budget;
+        
+        // Set dates (start from today, end based on duration)
+        const startDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(startDate.getDate() + template.duration);
+        
+        const startDateField = document.getElementById('start-date');
+        const endDateField = document.getElementById('end-date');
+        const notesField = document.getElementById('notes');
+        
+        if (startDateField) startDateField.value = startDate.toISOString().split('T')[0];
+        if (endDateField) endDateField.value = endDate.toISOString().split('T')[0];
+        if (notesField) notesField.value = `${template.description}\n\nHighlights:\n${template.highlights.map(h => `• ${h}`).join('\n')}`;
+        
+        // Close templates modal
+        const templatesModal = document.querySelector('.modal');
+        if (templatesModal) {
+            templatesModal.remove();
+        }
+        
+        // Open create trip modal
+        this.showCreateTripModal();
+        
+        this.showNotification(`Template "${template.name}" loaded!`, 'success');
+    }
+
+    // AI Template Generator
+    showAITemplateGenerator() {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'ai-template-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-robot"></i> AI Template Generator</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="ai-generator-form">
+                        <div class="form-group">
+                            <label for="ai-destination">Destination:</label>
+                            <input type="text" id="ai-destination" placeholder="e.g., Tokyo, Japan" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-duration">Duration (days):</label>
+                            <input type="number" id="ai-duration" min="1" max="30" value="7" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-budget">Budget ($):</label>
+                            <input type="number" id="ai-budget" min="100" step="100" placeholder="e.g., 2000" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-type">Trip Type:</label>
+                            <select id="ai-type" required>
+                                <option value="Leisure">Leisure</option>
+                                <option value="Business">Business</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Family">Family</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Honeymoon">Honeymoon</option>
+                                <option value="Solo">Solo Travel</option>
+                                <option value="Group">Group Travel</option>
+                                <option value="Backpacking">Backpacking</option>
+                                <option value="Luxury">Luxury</option>
+                                <option value="Budget">Budget</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Religious">Religious/Pilgrimage</option>
+                                <option value="Sports">Sports/Active</option>
+                                <option value="Wellness">Wellness/Health</option>
+                                <option value="Educational">Educational</option>
+                                <option value="Volunteer">Volunteer</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-interests">Interests (comma-separated):</label>
+                            <input type="text" id="ai-interests" placeholder="e.g., museums, food, nature, nightlife">
+                        </div>
+                        <button class="btn btn-primary" onclick="travelPlanner.generateAITemplate()">
+                            <i class="fas fa-magic"></i> Generate Template
+                        </button>
+                    </div>
+                    <div id="ai-generated-template" class="ai-generated-template" style="display: none;">
+                        <!-- Generated template will appear here -->
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    generateAITemplate() {
+        const destination = document.getElementById('ai-destination').value;
+        const duration = parseInt(document.getElementById('ai-duration').value);
+        const budget = parseInt(document.getElementById('ai-budget').value);
+        const type = document.getElementById('ai-type').value;
+        const interests = document.getElementById('ai-interests').value.split(',').map(i => i.trim()).filter(i => i);
+
+        if (!destination || !duration || !budget) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        // Simulate AI generation with realistic data
+        const template = this.generateAITemplateData(destination, duration, budget, type, interests);
+        
+        const templateContainer = document.getElementById('ai-generated-template');
+        templateContainer.innerHTML = `
+            <h4>🤖 AI Generated Template</h4>
+            <div class="template-card ai-generated">
+                <div class="template-header">
+                    <h4>${template.name}</h4>
+                    <div class="template-destination">${template.destination}</div>
+                </div>
+                <div class="template-details">
+                    <div class="template-duration">
+                        <i class="fas fa-calendar"></i> ${template.duration} days
+                    </div>
+                    <div class="template-budget">
+                        <i class="fas fa-dollar-sign"></i> ${this.formatCurrency(template.budget)}
+                    </div>
+                    <div class="template-type">
+                        <i class="fas fa-tag"></i> ${template.type}
+                    </div>
+                </div>
+                <div class="template-description">
+                    ${template.description}
+                </div>
+                <div class="template-highlights">
+                    <strong>Highlights:</strong>
+                    <div class="highlights-list">
+                        ${template.highlights.map(highlight => `<span class="highlight-tag">${highlight}</span>`).join('')}
+                    </div>
+                </div>
+                <div class="template-costs">
+                    <strong>Estimated Costs:</strong>
+                    <div class="costs-breakdown">
+                        ${Object.entries(template.estimatedCosts).map(([category, amount]) => 
+                            `<div class="cost-item">
+                                <span>${category}</span>
+                                <span>${this.formatCurrency(amount)}</span>
+                            </div>`
+                        ).join('')}
+                    </div>
+                </div>
+                <div class="template-actions">
+                    <button class="btn btn-primary" onclick="event.stopPropagation(); travelPlanner.createFromAITemplate('${template.id}')">
+                        <i class="fas fa-plus"></i> Use This Template
+                    </button>
+                    <button class="btn btn-secondary" onclick="event.stopPropagation(); travelPlanner.saveAITemplate('${template.id}')">
+                        <i class="fas fa-save"></i> Save Template
+                    </button>
+                </div>
+            </div>
+        `;
+        templateContainer.style.display = 'block';
+    }
+
+    generateAITemplateData(destination, duration, budget, type, interests) {
+        const id = 'ai_template_' + Date.now();
+        const city = destination.split(',')[0].trim();
+        
+        // Generate realistic highlights based on interests and destination
+        const highlights = this.generateHighlights(city, type, interests);
+        const description = this.generateDescription(city, type, duration, interests);
+        const estimatedCosts = this.generateCostBreakdown(budget, type, duration);
+
+        return {
+            id: id,
+            name: `${city} ${type} Adventure`,
+            destination: destination,
+            type: type,
+            duration: duration,
+            budget: budget,
+            description: description,
+            highlights: highlights,
+            estimatedCosts: estimatedCosts
+        };
+    }
+
+    generateHighlights(city, type, interests) {
+        const baseHighlights = {
+            'Leisure': ['City Center', 'Local Markets', 'Historic Sites', 'Restaurants'],
+            'Business': ['Business District', 'Conference Centers', 'Networking Venues', 'Airport'],
+            'Adventure': ['Hiking Trails', 'Outdoor Activities', 'Scenic Views', 'Adventure Sports'],
+            'Romance': ['Romantic Restaurants', 'Scenic Spots', 'Couples Activities', 'Sunset Views'],
+            'Family': ['Family Attractions', 'Parks', 'Museums', 'Kid-Friendly Activities']
+        };
+
+        let highlights = baseHighlights[type] || baseHighlights['Leisure'];
+        
+        // Add interest-based highlights
+        if (interests.includes('food') || interests.includes('cuisine')) {
+            highlights.push('Local Cuisine', 'Food Tours');
+        }
+        if (interests.includes('museums') || interests.includes('culture')) {
+            highlights.push('Museums', 'Cultural Sites');
+        }
+        if (interests.includes('nature') || interests.includes('outdoor')) {
+            highlights.push('Natural Attractions', 'Parks');
+        }
+        if (interests.includes('nightlife') || interests.includes('entertainment')) {
+            highlights.push('Nightlife', 'Entertainment');
+        }
+
+        return highlights.slice(0, 6); // Limit to 6 highlights
+    }
+
+    generateDescription(city, type, duration, interests) {
+        const typeDescriptions = {
+            'Leisure': `A perfect ${duration}-day ${type.toLowerCase()} getaway to ${city}`,
+            'Business': `Professional ${duration}-day ${type.toLowerCase()} trip to ${city}`,
+            'Adventure': `An exciting ${duration}-day ${type.toLowerCase()} experience in ${city}`,
+            'Romance': `A romantic ${duration}-day ${type.toLowerCase()} escape to ${city}`,
+            'Family': `A fun-filled ${duration}-day ${type.toLowerCase()} trip to ${city}`
+        };
+
+        let description = typeDescriptions[type] || typeDescriptions['Leisure'];
+        
+        if (interests.length > 0) {
+            description += `, featuring ${interests.slice(0, 3).join(', ')}`;
+        }
+        
+        description += '.';
+        return description;
+    }
+
+    generateCostBreakdown(budget, type, duration) {
+        const baseAllocation = {
+            'Leisure': { 'Flight': 0.3, 'Hotel': 0.4, 'Food': 0.15, 'Activities': 0.1, 'Transportation': 0.05 },
+            'Business': { 'Flight': 0.4, 'Hotel': 0.35, 'Conference': 0.15, 'Food': 0.05, 'Transportation': 0.05 },
+            'Adventure': { 'Flight': 0.25, 'Lodging': 0.3, 'Equipment': 0.2, 'Activities': 0.15, 'Food': 0.1 },
+            'Romance': { 'Flight': 0.35, 'Hotel': 0.4, 'Food': 0.15, 'Activities': 0.05, 'Transportation': 0.05 },
+            'Family': { 'Flight': 0.4, 'Hotel': 0.3, 'Food': 0.15, 'Activities': 0.1, 'Transportation': 0.05 }
+        };
+
+        const allocation = baseAllocation[type] || baseAllocation['Leisure'];
+        const costs = {};
+
+        Object.entries(allocation).forEach(([category, percentage]) => {
+            costs[category] = Math.round(budget * percentage);
+        });
+
+        return costs;
+    }
+
+    createFromAITemplate(templateId) {
+        console.log('🤖 Creating trip from AI template:', templateId);
+        // This would use the same logic as createFromTemplate
+        this.createFromTemplate(templateId);
+    }
+
+    saveAITemplate(templateId) {
+        console.log('💾 Saving AI template:', templateId);
+        // Find the AI template data and save it as custom template
+        const aiTemplate = this.getAITemplateById(templateId);
+        if (aiTemplate) {
+            let customTemplates = JSON.parse(localStorage.getItem('customTemplates') || '[]');
+            customTemplates.push(aiTemplate);
+            localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+            this.showNotification('AI template saved successfully!', 'success');
+        }
+    }
+
+    getAITemplateById(templateId) {
+        // This would need to store the AI template data temporarily
+        // For now, we'll return null and handle this differently
+        return null;
+    }
+
+    // Custom Template Creation
+    showCreateTemplate() {
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.id = 'create-template-modal';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-plus"></i> Create Custom Template</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="create-template-form">
+                        <div class="form-group">
+                            <label for="template-name">Template Name:</label>
+                            <input type="text" id="template-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-destination">Destination:</label>
+                            <input type="text" id="template-destination" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-type">Trip Type:</label>
+                            <select id="template-type" required>
+                                <option value="Leisure">Leisure</option>
+                                <option value="Business">Business</option>
+                                <option value="Adventure">Adventure</option>
+                                <option value="Family">Family</option>
+                                <option value="Romance">Romance</option>
+                                <option value="Honeymoon">Honeymoon</option>
+                                <option value="Solo">Solo Travel</option>
+                                <option value="Group">Group Travel</option>
+                                <option value="Backpacking">Backpacking</option>
+                                <option value="Luxury">Luxury</option>
+                                <option value="Budget">Budget</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Religious">Religious/Pilgrimage</option>
+                                <option value="Sports">Sports/Active</option>
+                                <option value="Wellness">Wellness/Health</option>
+                                <option value="Educational">Educational</option>
+                                <option value="Volunteer">Volunteer</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-duration">Duration (days):</label>
+                            <input type="number" id="template-duration" min="1" max="30" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-budget">Budget ($):</label>
+                            <input type="number" id="template-budget" min="100" step="100" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-description">Description:</label>
+                            <textarea id="template-description" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="template-highlights">Highlights (one per line):</label>
+                            <textarea id="template-highlights" rows="4" placeholder="Enter each highlight on a new line"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Cost Breakdown:</label>
+                            <div id="cost-breakdown-inputs">
+                                <div class="cost-input">
+                                    <input type="text" placeholder="Category" class="cost-category">
+                                    <input type="number" placeholder="Amount" class="cost-amount" step="10">
+                                    <button type="button" onclick="this.parentElement.remove()">×</button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" onclick="travelPlanner.addCostInput()">
+                                <i class="fas fa-plus"></i> Add Cost Category
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Template
+                        </button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Add form submission handler
+        document.getElementById('create-template-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveCustomTemplate();
+        });
+    }
+
+    addCostInput() {
+        const container = document.getElementById('cost-breakdown-inputs');
+        const costInput = document.createElement('div');
+        costInput.className = 'cost-input';
+        costInput.innerHTML = `
+            <input type="text" placeholder="Category" class="cost-category">
+            <input type="number" placeholder="Amount" class="cost-amount" step="10">
+            <button type="button" onclick="this.parentElement.remove()">×</button>
+        `;
+        container.appendChild(costInput);
+    }
+
+    saveCustomTemplate() {
+        const name = document.getElementById('template-name').value;
+        const destination = document.getElementById('template-destination').value;
+        const type = document.getElementById('template-type').value;
+        const duration = parseInt(document.getElementById('template-duration').value);
+        const budget = parseInt(document.getElementById('template-budget').value);
+        const description = document.getElementById('template-description').value;
+        const highlightsText = document.getElementById('template-highlights').value;
+        const highlights = highlightsText.split('\n').filter(h => h.trim());
+
+        // Collect cost breakdown
+        const costInputs = document.querySelectorAll('.cost-input');
+        const estimatedCosts = {};
+        costInputs.forEach(input => {
+            const category = input.querySelector('.cost-category').value;
+            const amount = parseFloat(input.querySelector('.cost-amount').value);
+            if (category && amount) {
+                estimatedCosts[category] = amount;
+            }
+        });
+
+        if (!name || !destination || !duration || !budget || !description) {
+            this.showNotification('Please fill in all required fields', 'error');
+            return;
+        }
+
+        const template = {
+            id: 'custom_template_' + Date.now(),
+            name: name,
+            destination: destination,
+            type: type,
+            duration: duration,
+            budget: budget,
+            description: description,
+            highlights: highlights,
+            estimatedCosts: estimatedCosts
+        };
+
+        // Save to localStorage
+        let customTemplates = JSON.parse(localStorage.getItem('customTemplates') || '[]');
+        customTemplates.push(template);
+        localStorage.setItem('customTemplates', JSON.stringify(customTemplates));
+
+        this.showNotification('Custom template saved successfully!', 'success');
+        this.closeAllModals();
+    }
+
     // Utility Functions
     calculateTotalBudget() {
         return this.trips.reduce((sum, trip) => sum + trip.budget, 0);
+    }
+
+    calculateTripDuration(startDate, endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const timeDiff = end.getTime() - start.getTime();
+        const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+        return daysDiff;
     }
 
     calculateTotalSpent() {
@@ -585,8 +1658,14 @@ class TravelPlanner {
 
     // Modal Management
     showCreateTripModal() {
-        document.getElementById('create-trip-modal').classList.add('active');
+        const modal = document.getElementById('create-trip-modal');
+        if (!modal) {
+            console.error('❌ Create trip modal not found in DOM');
+            return;
+        }
+        modal.classList.add('active');
         document.body.style.overflow = 'hidden';
+        console.log('✅ Create trip modal opened');
     }
 
     closeCreateTripModal() {
@@ -1161,15 +2240,42 @@ class TravelPlanner {
         document.getElementById('create-packing-list-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
         
-        // Populate trip dropdown
+        // Populate trip dropdown with enhanced information
         const tripSelect = document.getElementById('packing-trip');
         tripSelect.innerHTML = '<option value="">Select a trip</option>';
-        this.trips.forEach(trip => {
+        
+        if (this.trips.length === 0) {
             const option = document.createElement('option');
-            option.value = trip.id;
-            option.textContent = trip.name;
+            option.value = '';
+            option.textContent = 'No trips available - Create a trip first';
+            option.disabled = true;
             tripSelect.appendChild(option);
-        });
+        } else {
+            // Sort trips by start date (upcoming first)
+            const sortedTrips = [...this.trips].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+            
+            sortedTrips.forEach(trip => {
+                const option = document.createElement('option');
+                option.value = trip.id;
+                
+                // Format dates for display
+                const startDate = new Date(trip.startDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                const endDate = new Date(trip.endDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Create enhanced display text
+                const tripType = trip.type ? trip.type.charAt(0).toUpperCase() + trip.type.slice(1) : 'Trip';
+                const duration = this.calculateTripDuration(trip.startDate, trip.endDate);
+                
+                option.textContent = `${trip.name} - ${trip.destination} (${startDate}-${endDate}, ${duration} days, ${tripType})`;
+                tripSelect.appendChild(option);
+            });
+        }
     }
 
     closeCreatePackingListModal() {
@@ -1182,15 +2288,42 @@ class TravelPlanner {
         document.getElementById('add-document-modal').classList.add('active');
         document.body.style.overflow = 'hidden';
         
-        // Populate trip dropdown
+        // Populate trip dropdown with enhanced information
         const tripSelect = document.getElementById('document-trip');
-        tripSelect.innerHTML = '<option value="">All Trips</option>';
-        this.trips.forEach(trip => {
+        tripSelect.innerHTML = '<option value="">All Trips (General Document)</option>';
+        
+        if (this.trips.length === 0) {
             const option = document.createElement('option');
-            option.value = trip.id;
-            option.textContent = trip.name;
+            option.value = '';
+            option.textContent = 'No trips available - Document will be general';
+            option.disabled = true;
             tripSelect.appendChild(option);
-        });
+        } else {
+            // Sort trips by start date (upcoming first)
+            const sortedTrips = [...this.trips].sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+            
+            sortedTrips.forEach(trip => {
+                const option = document.createElement('option');
+                option.value = trip.id;
+                
+                // Format dates for display
+                const startDate = new Date(trip.startDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                const endDate = new Date(trip.endDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Create enhanced display text
+                const tripType = trip.type ? trip.type.charAt(0).toUpperCase() + trip.type.slice(1) : 'Trip';
+                const duration = this.calculateTripDuration(trip.startDate, trip.endDate);
+                
+                option.textContent = `${trip.name} - ${trip.destination} (${startDate}-${endDate}, ${duration} days, ${tripType})`;
+                tripSelect.appendChild(option);
+            });
+        }
     }
 
     closeAddDocumentModal() {
@@ -1327,7 +2460,7 @@ class TravelPlanner {
 
     setupBeforeInstallPrompt() {
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
+            // Don't prevent default - let the browser handle the prompt naturally
             this.deferredPrompt = e;
             this.showInstallPrompt();
         });
@@ -1506,6 +2639,15 @@ function closeAddDocumentModal() {
 
 function closeWeatherModal() {
     travelPlanner.closeWeatherModal();
+}
+
+function showTripTemplates() {
+    console.log('🎯 showTripTemplates called');
+    if (typeof travelPlanner === 'undefined') {
+        console.error('❌ travelPlanner not initialized yet');
+        return;
+    }
+    travelPlanner.showTripTemplates();
 }
 
 // Initialize the application when DOM is loaded

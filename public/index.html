@@ -125,6 +125,17 @@
                             Manage Budget
                         </button>
                     </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-magic"></i>
+                        </div>
+                        <h3>Trip Templates</h3>
+                        <p>Quick start with popular destinations</p>
+                        <button class="btn btn-secondary" onclick="showTripTemplates()">
+                            Browse Templates
+                        </button>
+                    </div>
                 </div>
 
                 <div class="recent-trips">
@@ -243,10 +254,79 @@
                         <div class="setting-item">
                             <label for="currency">Default Currency</label>
                             <select id="currency" onchange="updateCurrency(this.value)">
-                                <option value="USD">USD ($)</option>
-                                <option value="EUR">EUR (€)</option>
-                                <option value="GBP">GBP (£)</option>
-                                <option value="CAD">CAD (C$)</option>
+                                <option value="USD">USD ($) - US Dollar</option>
+                                <option value="EUR">EUR (€) - Euro</option>
+                                <option value="GBP">GBP (£) - British Pound</option>
+                                <option value="CAD">CAD (C$) - Canadian Dollar</option>
+                                <option value="AUD">AUD (A$) - Australian Dollar</option>
+                                <option value="JPY">JPY (¥) - Japanese Yen</option>
+                                <option value="CHF">CHF (CHF) - Swiss Franc</option>
+                                <option value="CNY">CNY (¥) - Chinese Yuan</option>
+                                <option value="INR">INR (₹) - Indian Rupee</option>
+                                <option value="BRL">BRL (R$) - Brazilian Real</option>
+                                <option value="MXN">MXN ($) - Mexican Peso</option>
+                                <option value="SGD">SGD (S$) - Singapore Dollar</option>
+                                <option value="HKD">HKD (HK$) - Hong Kong Dollar</option>
+                                <option value="NZD">NZD (NZ$) - New Zealand Dollar</option>
+                                <option value="SEK">SEK (kr) - Swedish Krona</option>
+                                <option value="NOK">NOK (kr) - Norwegian Krone</option>
+                                <option value="DKK">DKK (kr) - Danish Krone</option>
+                                <option value="PLN">PLN (zł) - Polish Zloty</option>
+                                <option value="CZK">CZK (Kč) - Czech Koruna</option>
+                                <option value="HUF">HUF (Ft) - Hungarian Forint</option>
+                                <option value="RUB">RUB (₽) - Russian Ruble</option>
+                                <option value="ZAR">ZAR (R) - South African Rand</option>
+                                <option value="KRW">KRW (₩) - South Korean Won</option>
+                                <option value="THB">THB (฿) - Thai Baht</option>
+                                <option value="MYR">MYR (RM) - Malaysian Ringgit</option>
+                                <option value="IDR">IDR (Rp) - Indonesian Rupiah</option>
+                                <option value="PHP">PHP (₱) - Philippine Peso</option>
+                                <option value="VND">VND (₫) - Vietnamese Dong</option>
+                                <option value="TRY">TRY (₺) - Turkish Lira</option>
+                                <option value="ILS">ILS (₪) - Israeli Shekel</option>
+                                <option value="AED">AED (د.إ) - UAE Dirham</option>
+                                <option value="SAR">SAR (ر.س) - Saudi Riyal</option>
+                                <option value="QAR">QAR (ر.ق) - Qatari Riyal</option>
+                                <option value="KWD">KWD (د.ك) - Kuwaiti Dinar</option>
+                                <option value="BHD">BHD (د.ب) - Bahraini Dinar</option>
+                                <option value="OMR">OMR (ر.ع.) - Omani Rial</option>
+                                <option value="JOD">JOD (د.ا) - Jordanian Dinar</option>
+                                <option value="LBP">LBP (ل.ل) - Lebanese Pound</option>
+                                <option value="EGP">EGP (ج.م) - Egyptian Pound</option>
+                                <option value="MAD">MAD (د.م.) - Moroccan Dirham</option>
+                                <option value="TND">TND (د.ت) - Tunisian Dinar</option>
+                                <option value="DZD">DZD (د.ج) - Algerian Dinar</option>
+                                <option value="NGN">NGN (₦) - Nigerian Naira</option>
+                                <option value="GHS">GHS (₵) - Ghanaian Cedi</option>
+                                <option value="KES">KES (KSh) - Kenyan Shilling</option>
+                                <option value="UGX">UGX (USh) - Ugandan Shilling</option>
+                                <option value="TZS">TZS (TSh) - Tanzanian Shilling</option>
+                                <option value="ETB">ETB (Br) - Ethiopian Birr</option>
+                                <option value="ZMW">ZMW (ZK) - Zambian Kwacha</option>
+                                <option value="BWP">BWP (P) - Botswanan Pula</option>
+                                <option value="NAD">NAD (N$) - Namibian Dollar</option>
+                                <option value="SZL">SZL (L) - Swazi Lilangeni</option>
+                                <option value="LSL">LSL (L) - Lesotho Loti</option>
+                                <option value="MUR">MUR (₨) - Mauritian Rupee</option>
+                                <option value="SCR">SCR (₨) - Seychellois Rupee</option>
+                                <option value="MVR">MVR (Rf) - Maldivian Rufiyaa</option>
+                                <option value="LKR">LKR (₨) - Sri Lankan Rupee</option>
+                                <option value="BDT">BDT (৳) - Bangladeshi Taka</option>
+                                <option value="PKR">PKR (₨) - Pakistani Rupee</option>
+                                <option value="AFN">AFN (؋) - Afghan Afghani</option>
+                                <option value="NPR">NPR (₨) - Nepalese Rupee</option>
+                                <option value="BTN">BTN (Nu.) - Bhutanese Ngultrum</option>
+                                <option value="MMK">MMK (K) - Myanmar Kyat</option>
+                                <option value="LAK">LAK (₭) - Lao Kip</option>
+                                <option value="KHR">KHR (៛) - Cambodian Riel</option>
+                                <option value="BND">BND (B$) - Brunei Dollar</option>
+                                <option value="FJD">FJD (FJ$) - Fijian Dollar</option>
+                                <option value="PGK">PGK (K) - Papua New Guinean Kina</option>
+                                <option value="SBD">SBD (SI$) - Solomon Islands Dollar</option>
+                                <option value="VUV">VUV (Vt) - Vanuatu Vatu</option>
+                                <option value="WST">WST (WS$) - Samoan Tala</option>
+                                <option value="TOP">TOP (T$) - Tongan Pa'anga</option>
+                                <option value="XPF">XPF (₣) - CFP Franc</option>
                             </select>
                         </div>
                     </div>
@@ -296,6 +376,20 @@
                             <option value="business">Business</option>
                             <option value="adventure">Adventure</option>
                             <option value="family">Family</option>
+                            <option value="romance">Romance</option>
+                            <option value="honeymoon">Honeymoon</option>
+                            <option value="solo">Solo Travel</option>
+                            <option value="group">Group Travel</option>
+                            <option value="backpacking">Backpacking</option>
+                            <option value="luxury">Luxury</option>
+                            <option value="budget">Budget</option>
+                            <option value="cultural">Cultural</option>
+                            <option value="religious">Religious/Pilgrimage</option>
+                            <option value="sports">Sports/Active</option>
+                            <option value="wellness">Wellness/Health</option>
+                            <option value="educational">Educational</option>
+                            <option value="volunteer">Volunteer</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -404,14 +498,28 @@
                 
                 <div class="form-group">
                     <label for="document-type">Document Type</label>
-                    <select id="document-type" required>
-                        <option value="passport">Passport</option>
-                        <option value="visa">Visa</option>
-                        <option value="insurance">Travel Insurance</option>
-                        <option value="ticket">Ticket/Boarding Pass</option>
-                        <option value="reservation">Hotel Reservation</option>
-                        <option value="other">Other</option>
-                    </select>
+                        <select id="document-type" required>
+                            <option value="passport">Passport</option>
+                            <option value="visa">Visa</option>
+                            <option value="insurance">Travel Insurance</option>
+                            <option value="ticket">Flight Ticket/Boarding Pass</option>
+                            <option value="reservation">Hotel Reservation</option>
+                            <option value="car-rental">Car Rental Confirmation</option>
+                            <option value="tour-booking">Tour/Activity Booking</option>
+                            <option value="cruise-ticket">Cruise Ticket</option>
+                            <option value="train-pass">Train Pass/Ticket</option>
+                            <option value="bus-ticket">Bus Ticket</option>
+                            <option value="event-ticket">Event/Concert Ticket</option>
+                            <option value="museum-pass">Museum Pass</option>
+                            <option value="city-pass">City Pass</option>
+                            <option value="vaccination">Vaccination Certificate</option>
+                            <option value="medical">Medical Certificate</option>
+                            <option value="drivers-license">International Driver's License</option>
+                            <option value="student-id">Student ID</option>
+                            <option value="membership">Membership Card</option>
+                            <option value="voucher">Voucher/Coupon</option>
+                            <option value="other">Other</option>
+                        </select>
                 </div>
                 
                 <div class="form-group">
@@ -512,6 +620,7 @@
     </footer>
 
     <script type="module" src="firebase-config.js"></script>
-    <script src="script.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="script.js?v=3"></script>
 </body>
 </html>
