@@ -622,6 +622,16 @@ body {
     border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.calendar-day-header {
+    background: #f8f9fa;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
 .calendar-controls h3 {
     margin: 0;
     color: #333;
@@ -1139,6 +1149,195 @@ body {
     background: #667eea;
     color: white;
     border-color: #667eea;
+}
+
+/* PWA Styles */
+@media (display-mode: standalone) {
+    .header {
+        padding-top: env(safe-area-inset-top);
+    }
+    
+    .main-content {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    /* Hide browser UI elements in standalone mode */
+    body {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+}
+
+/* PWA Install Prompt */
+.install-prompt {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    animation: slideUp 0.3s ease-out;
+}
+
+.install-prompt.show {
+    display: block;
+}
+
+.install-prompt-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.install-prompt-icon {
+    font-size: 2rem;
+}
+
+.install-prompt-text {
+    flex: 1;
+}
+
+.install-prompt-text h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.1rem;
+}
+
+.install-prompt-text p {
+    margin: 0;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.install-prompt-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.install-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.install-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.install-btn.primary {
+    background: white;
+    color: #667eea;
+    font-weight: 600;
+}
+
+.install-btn.primary:hover {
+    background: #f8f9fa;
+}
+
+/* Offline Indicator */
+.offline-indicator {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #dc3545;
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    z-index: 1001;
+    transform: translateY(-100%);
+    transition: transform 0.3s ease;
+}
+
+.offline-indicator.show {
+    transform: translateY(0);
+}
+
+/* PWA Splash Screen */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    color: white;
+    text-align: center;
+}
+
+.splash-screen.hide {
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.5s ease;
+}
+
+.splash-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    animation: pulse 2s infinite;
+}
+
+.splash-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.splash-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 2rem;
+}
+
+.splash-loading {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Add Item Styles */
+.add-item {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.add-item input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.add-item input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Responsive Design */
