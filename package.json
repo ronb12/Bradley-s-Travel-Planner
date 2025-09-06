@@ -1,0 +1,27 @@
+{
+  "name": "bradleys-travel-planner",
+  "version": "1.0.0",
+  "description": "A comprehensive travel planning application by Bradley Virtual Solutions, LLC",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server public -p 3000",
+    "build": "echo 'Build complete'",
+    "deploy": "firebase deploy --only hosting",
+    "deploy:hosting": "firebase deploy --only hosting"
+  },
+  "keywords": [
+    "travel",
+    "planner",
+    "itinerary",
+    "budget",
+    "trip"
+  ],
+  "author": "Bradley Virtual Solutions, LLC",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1"
+  }
+}

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bradley's Travel Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-plane"></i>
+                    <h1>Bradley's Travel Planner</h1>
+                </div>
+                <nav class="nav">
+                    <button class="nav-btn active" data-section="dashboard">
+                        <i class="fas fa-home"></i>
+                        Dashboard
+                    </button>
+                    <button class="nav-btn" data-section="trips">
+                        <i class="fas fa-map-marked-alt"></i>
+                        My Trips
+                    </button>
+                    <button class="nav-btn" data-section="budget">
+                        <i class="fas fa-calculator"></i>
+                        Budget
+                    </button>
+                    <button class="nav-btn" data-section="settings">
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="content-section active">
+                <div class="section-header">
+                    <h2>Welcome to Your Travel Dashboard</h2>
+                    <p>Plan, organize, and track your travel adventures</p>
+                </div>
+                
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <h3>Create New Trip</h3>
+                        <p>Start planning your next adventure</p>
+                        <button class="btn btn-primary" onclick="showCreateTripModal()">
+                            Create Trip
+                        </button>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <h3>Upcoming Trips</h3>
+                        <p id="upcoming-count">0 trips planned</p>
+                        <button class="btn btn-secondary" onclick="showSection('trips')">
+                            View All
+                        </button>
+                    </div>
+                    
+                    <div class="dashboard-card">
+                        <div class="card-icon">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <h3>Total Budget</h3>
+                        <p id="total-budget">$0.00</p>
+                        <button class="btn btn-secondary" onclick="showSection('budget')">
+                            Manage Budget
+                        </button>
+                    </div>
+                </div>
+
+                <div class="recent-trips">
+                    <h3>Recent Trips</h3>
+                    <div id="recent-trips-list" class="trips-list">
+                        <!-- Recent trips will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trips Section -->
+            <section id="trips" class="content-section">
+                <div class="section-header">
+                    <h2>My Trips</h2>
+                    <button class="btn btn-primary" onclick="showCreateTripModal()">
+                        <i class="fas fa-plus"></i>
+                        New Trip
+                    </button>
+                </div>
+                
+                <div class="trips-grid" id="trips-grid">
+                    <!-- Trips will be populated here -->
+                </div>
+            </section>
+
+            <!-- Budget Section -->
+            <section id="budget" class="content-section">
+                <div class="section-header">
+                    <h2>Budget Tracker</h2>
+                </div>
+                
+                <div class="budget-overview">
+                    <div class="budget-card">
+                        <h3>Total Budget</h3>
+                        <div class="budget-amount" id="total-budget-amount">$0.00</div>
+                    </div>
+                    <div class="budget-card">
+                        <h3>Total Spent</h3>
+                        <div class="budget-amount spent" id="total-spent-amount">$0.00</div>
+                    </div>
+                    <div class="budget-card">
+                        <h3>Remaining</h3>
+                        <div class="budget-amount remaining" id="remaining-budget-amount">$0.00</div>
+                    </div>
+                </div>
+
+                <div class="budget-breakdown">
+                    <h3>Budget Breakdown by Trip</h3>
+                    <div id="budget-breakdown-list">
+                        <!-- Budget breakdown will be populated here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="content-section">
+                <div class="section-header">
+                    <h2>Settings</h2>
+                </div>
+                
+                <div class="settings-content">
+                    <div class="setting-group">
+                        <h3>General</h3>
+                        <div class="setting-item">
+                            <label for="currency">Default Currency</label>
+                            <select id="currency" onchange="updateCurrency(this.value)">
+                                <option value="USD">USD ($)</option>
+                                <option value="EUR">EUR (€)</option>
+                                <option value="GBP">GBP (£)</option>
+                                <option value="CAD">CAD (C$)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Data Management</h3>
+                        <div class="setting-item">
+                            <button class="btn btn-secondary" onclick="exportData()">
+                                <i class="fas fa-download"></i>
+                                Export Data
+                            </button>
+                            <button class="btn btn-danger" onclick="clearAllData()">
+                                <i class="fas fa-trash"></i>
+                                Clear All Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Create Trip Modal -->
+    <div id="create-trip-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Trip</h3>
+                <button class="close-btn" onclick="closeCreateTripModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="create-trip-form" onsubmit="createTrip(event)">
+                <div class="form-group">
+                    <label for="trip-name">Trip Name</label>
+                    <input type="text" id="trip-name" required placeholder="e.g., Summer Europe Adventure">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" required placeholder="e.g., Paris, France">
+                    </div>
+                    <div class="form-group">
+                        <label for="trip-type">Trip Type</label>
+                        <select id="trip-type" required>
+                            <option value="leisure">Leisure</option>
+                            <option value="business">Business</option>
+                            <option value="adventure">Adventure</option>
+                            <option value="family">Family</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start-date">Start Date</label>
+                        <input type="date" id="start-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-date">End Date</label>
+                        <input type="date" id="end-date" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="budget">Budget</label>
+                    <input type="number" id="budget" step="0.01" placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" placeholder="Any additional notes about your trip..."></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeCreateTripModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        Create Trip
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Trip Details Modal -->
+    <div id="trip-details-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="trip-details-title">Trip Details</h3>
+                <button class="close-btn" onclick="closeTripDetailsModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="trip-details-content">
+                <!-- Trip details will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
