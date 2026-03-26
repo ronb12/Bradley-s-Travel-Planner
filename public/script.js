@@ -4422,11 +4422,15 @@ class TravelPlanner {
             this.renderFlightResults(data, origin, destination, currency, resultsEl);
         } catch (err) {
             console.error('Flight search error:', err);
+            const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
+            const hint = isCors
+                ? 'The API blocked the request (CORS). Make sure your TravelPayouts token is valid — a 32-character string from your account dashboard.'
+                : 'Try a different route or month — prices may not be cached for this combination yet.';
             resultsEl.innerHTML = `
                 <div class="price-error">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>${this.escapeHtml(err.message)}</p>
-                    <small>Try a different route or month — prices may not be cached for this combination yet.</small>
+                    <small>${hint}</small>
                 </div>`;
         }
     }
@@ -4520,10 +4524,12 @@ class TravelPlanner {
             this.renderHotelResults(data, location, checkIn, checkOut, currency, resultsEl);
         } catch (err) {
             console.error('Hotel search error:', err);
+            const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
             resultsEl.innerHTML = `
                 <div class="price-error">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p>${this.escapeHtml(err.message)}</p>
+                    ${isCors ? '<small>The API blocked the request (CORS). Ensure your TravelPayouts token is a valid 32-character string from your account dashboard.</small>' : ''}
                 </div>`;
         }
     }
