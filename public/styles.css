@@ -3482,12 +3482,12 @@ mark {
     background-size: 400% 400%;
     animation: gradientShift 15s ease infinite;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 10000;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 1rem;
+    padding: 2rem 1rem;
     box-sizing: border-box;
     min-height: 100vh;
 }
@@ -3514,13 +3514,13 @@ mark {
     background: rgba(255, 255, 255, 0.98);
     backdrop-filter: blur(30px);
     border-radius: 24px;
-    box-shadow: 
+    box-shadow:
         0 32px 80px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(255, 255, 255, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.3);
     width: 100%;
     max-width: 480px;
-    margin: 2rem 0;
+    margin: auto;
     overflow: hidden;
     position: relative;
     transform: translateY(0);
@@ -3539,7 +3539,7 @@ mark {
     background-size: 400% 400%;
     animation: gradientShift 12s ease infinite;
     color: white;
-    padding: 3rem 2rem;
+    padding: 2rem 2rem;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -3568,8 +3568,8 @@ mark {
 }
 
 .login-logo i {
-    font-size: 4rem;
-    margin-bottom: 1.5rem;
+    font-size: 3rem;
+    margin-bottom: 1rem;
     display: block;
     color: white !important;
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
@@ -3607,7 +3607,7 @@ mark {
 }
 
 .login-content {
-    padding: 3rem 2.5rem;
+    padding: 2rem 2.5rem;
     background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
 }
 
@@ -3685,7 +3685,7 @@ mark {
 
 .login-subtitle {
     color: #64748b;
-    margin: 0 0 2.5rem 0;
+    margin: 0 0 1.5rem 0;
     font-size: 1rem;
     font-weight: 500;
     line-height: 1.5;
