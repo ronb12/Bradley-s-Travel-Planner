@@ -913,6 +913,18 @@ const notificationStyles = `
         transition: background 0.2s;
     }
     .forgot-pw-cancel:hover { background: #e2e8f0; }
+    .forgot-pw-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+    }
+    .forgot-pw-submit:hover:not(:disabled) { opacity: 0.9; }
+    .forgot-pw-submit:disabled { opacity: 0.6; cursor: not-allowed; }
     .field-error {
         color: #dc2626;
         font-size: 0.85rem;
