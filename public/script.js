@@ -4371,30 +4371,61 @@ class TravelPlanner {
         resultsEl.innerHTML = '<div class="price-loading"><i class="fas fa-spinner fa-spin"></i> Searching flights…</div>';
 
         try {
-            // TravelPayouts Aviasales cheap-tickets API
-            const params = new URLSearchParams({
-                origin,
-                destination,
-                depart_date: date,      // YYYY-MM
-                currency,
-                token,
+            let data = null;
+
+            // Try v1 cheap-tickets first (cached historical prices)
+            const v1Params = new URLSearchParams({
+                origin, destination,
+                depart_date: date,
+                currency, token,
                 limit: 10,
                 sorting: 'price',
-                show_to_affiliates: true
+                show_to_affiliates: 'true'
             });
-            const res = await fetch(`https://api.travelpayouts.com/v1/prices/cheap?${params}`, {
-                headers: { 'Accept-Encoding': 'gzip, deflate, br' }
-            });
-            if (!res.ok) throw new Error(`API error ${res.status}`);
-            const data = await res.json();
+            const v1Res = await fetch(`https://api.travelpayouts.com/v1/prices/cheap?${v1Params}`);
+
+            if (v1Res.ok) {
+                data = await v1Res.json();
+            } else if (v1Res.status === 503 || v1Res.status === 404) {
+                // v1 has no cached data — fall back to v2 latest prices
+                const v2Params = new URLSearchParams({
+                    origin, destination,
+                    currency, token,
+                    limit: 10,
+                    sorting: 'price',
+                    show_to_affiliates: 'true',
+                    trip_class: 0
+                });
+                const v2Res = await fetch(`https://api.travelpayouts.com/v2/prices/latest?${v2Params}`);
+                if (!v2Res.ok) throw new Error(`API error ${v2Res.status}`);
+                const v2Data = await v2Res.json();
+                // Normalise v2 response to v1 shape
+                data = { data: { [destination]: {} }, currency };
+                if (Array.isArray(v2Data.data)) {
+                    v2Data.data.forEach((f, i) => {
+                        data.data[destination][i] = {
+                            price: f.value,
+                            airline: f.airline,
+                            depart_date: f.depart_date,
+                            return_date: f.return_date,
+                            number_of_changes: f.number_of_changes ?? 0
+                        };
+                    });
+                }
+            } else if (v1Res.status === 401) {
+                throw new Error('Invalid API token — check your TravelPayouts key in Settings');
+            } else {
+                throw new Error(`API error ${v1Res.status}`);
+            }
+
             this.renderFlightResults(data, origin, destination, currency, resultsEl);
         } catch (err) {
             console.error('Flight search error:', err);
             resultsEl.innerHTML = `
                 <div class="price-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Could not fetch flight prices. Check your API key or try again.</p>
-                    <small>${this.escapeHtml(err.message)}</small>
+                    <p>${this.escapeHtml(err.message)}</p>
+                    <small>Try a different route or month — prices may not be cached for this combination yet.</small>
                 </div>`;
         }
     }
@@ -4481,6 +4512,8 @@ class TravelPlanner {
                 lang: 'en'
             });
             const res = await fetch(`https://engine.hotellook.com/api/v2/cache.json?${params}`);
+            if (res.status === 401)  throw new Error('Invalid API token — check your TravelPayouts key in Settings');
+            if (res.status === 503)  throw new Error('No cached hotel data for this location and dates. Try different dates or a major city like "Paris" or "New York".');
             if (!res.ok) throw new Error(`API error ${res.status}`);
             const data = await res.json();
             this.renderHotelResults(data, location, checkIn, checkOut, currency, resultsEl);
@@ -4489,8 +4522,7 @@ class TravelPlanner {
             resultsEl.innerHTML = `
                 <div class="price-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <p>Could not fetch hotel prices. Check your API key or try again.</p>
-                    <small>${this.escapeHtml(err.message)}</small>
+                    <p>${this.escapeHtml(err.message)}</p>
                 </div>`;
         }
     }
