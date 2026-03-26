@@ -66,6 +66,7 @@ class AuthManager {
 
 
     async handleSignIn(e) {
+        const submitBtn = document.querySelector('#signin-form-element button[type="submit"]');
         try {
             const email = document.getElementById('signin-email').value;
             const password = document.getElementById('signin-password').value;
@@ -81,6 +82,10 @@ class AuthManager {
             }
 
             this.showLoading('Signing in...');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Signing in...';
+            }
 
             await signInWithEmailAndPassword(auth, email, password);
             this.showNotification('Welcome back!', 'success');
@@ -90,6 +95,10 @@ class AuthManager {
             this.handleAuthError(error);
         } finally {
             this.hideLoading();
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-sign-in-alt" aria-hidden="true"></i> Sign In';
+            }
         }
     }
 
@@ -174,20 +183,88 @@ class AuthManager {
         await this.signInWithGoogle();
     }
 
-    async showForgotPassword() {
-        const email = prompt('Enter your email address to reset password:');
-        if (email && this.validateInput(email, 'email')) {
+    showForgotPassword() {
+        // Remove any existing modal
+        const existing = document.querySelector('.forgot-pw-modal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'forgot-pw-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-labelledby', 'forgot-pw-title');
+        modal.innerHTML = `
+            <div class="forgot-pw-overlay"></div>
+            <div class="forgot-pw-content">
+                <div class="forgot-pw-header">
+                    <h2 id="forgot-pw-title">Reset Password</h2>
+                    <button class="forgot-pw-close" aria-label="Close dialog">&times;</button>
+                </div>
+                <div class="forgot-pw-body">
+                    <p>Enter your email address and we'll send you a link to reset your password.</p>
+                    <div class="form-group">
+                        <label for="reset-email">Email Address</label>
+                        <div class="input-group">
+                            <i class="fas fa-envelope" aria-hidden="true"></i>
+                            <input type="email" id="reset-email" name="email"
+                                   autocomplete="email" placeholder="Enter your email" required>
+                        </div>
+                        <div id="reset-email-error" class="field-error" role="alert" aria-live="assertive"></div>
+                    </div>
+                </div>
+                <div class="forgot-pw-footer">
+                    <button class="btn forgot-pw-cancel">Cancel</button>
+                    <button class="btn btn-full forgot-pw-submit">Send Reset Email</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        const emailInput = modal.querySelector('#reset-email');
+        const errorDiv   = modal.querySelector('#reset-email-error');
+        const submitBtn  = modal.querySelector('.forgot-pw-submit');
+
+        // Focus the email field
+        setTimeout(() => emailInput.focus(), 50);
+
+        const closeModal = () => modal.remove();
+
+        modal.querySelector('.forgot-pw-overlay').addEventListener('click', closeModal);
+        modal.querySelector('.forgot-pw-close').addEventListener('click', closeModal);
+        modal.querySelector('.forgot-pw-cancel').addEventListener('click', closeModal);
+
+        // Close on Escape
+        const onKeydown = (e) => {
+            if (e.key === 'Escape') { closeModal(); document.removeEventListener('keydown', onKeydown); }
+        };
+        document.addEventListener('keydown', onKeydown);
+
+        submitBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            if (!this.validateInput(email, 'email')) {
+                errorDiv.textContent = 'Please enter a valid email address.';
+                emailInput.focus();
+                return;
+            }
+            errorDiv.textContent = '';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending…';
             try {
                 this.showLoading('Sending reset email...');
                 await sendPasswordResetEmail(auth, email);
-                this.showNotification('Password reset email sent!', 'success');
+                closeModal();
+                document.removeEventListener('keydown', onKeydown);
+                this.showNotification('Password reset email sent! Check your inbox.', 'success');
             } catch (error) {
                 console.error('Password reset error:', error);
                 this.handleAuthError(error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Reset Email';
             } finally {
                 this.hideLoading();
             }
-        }
+        });
     }
 
     handleAuthError(error) {
@@ -289,9 +366,12 @@ class AuthManager {
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
+        notification.setAttribute('role', 'alert');
+        notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+        const iconName = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
         notification.innerHTML = `
             <div class="notification-content">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <i class="fas fa-${iconName}" aria-hidden="true"></i>
                 <span>${message}</span>
             </div>
         `;
@@ -606,19 +686,21 @@ class AuthManager {
 let authManager;
 
 // Define global functions
-function togglePassword(inputId) {
+function togglePassword(inputId, btn) {
     const input = document.getElementById(inputId);
-    const button = input.nextElementSibling;
+    const button = btn || input.nextElementSibling;
     const icon = button.querySelector('i');
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         icon.classList.remove('fa-eye');
         icon.classList.add('fa-eye-slash');
+        button.setAttribute('aria-label', 'Hide password');
     } else {
         input.type = 'password';
         icon.classList.remove('fa-eye-slash');
         icon.classList.add('fa-eye');
+        button.setAttribute('aria-label', 'Show password');
     }
 }
 
@@ -723,6 +805,93 @@ const notificationStyles = `
     .notification-content span {
         color: #333;
         font-weight: 500;
+    }
+
+    /* Forgot Password Modal */
+    .forgot-pw-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 10002;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+        box-sizing: border-box;
+    }
+    .forgot-pw-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        backdrop-filter: blur(4px);
+    }
+    .forgot-pw-content {
+        position: relative;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+        width: 100%;
+        max-width: 440px;
+        overflow: hidden;
+    }
+    .forgot-pw-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+    .forgot-pw-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .forgot-pw-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        line-height: 1;
+        transition: background 0.2s;
+    }
+    .forgot-pw-close:hover { background: #f3f4f6; color: #374151; }
+    .forgot-pw-body {
+        padding: 1.5rem 2rem;
+    }
+    .forgot-pw-body p {
+        margin: 0 0 1.25rem;
+        color: #64748b;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    .forgot-pw-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        padding: 1.25rem 2rem;
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+    .forgot-pw-cancel {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.625rem 1.25rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .forgot-pw-cancel:hover { background: #e2e8f0; }
+    .field-error {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 0.375rem;
+        min-height: 1.2em;
     }
 `;
 

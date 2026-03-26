@@ -3317,9 +3317,8 @@ mark {
     transition: all 0.3s ease;
 }
 
-.login-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 
+.login-container:focus-within {
+    box-shadow:
         0 40px 100px rgba(0, 0, 0, 0.2),
         0 0 0 1px rgba(255, 255, 255, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.4);
@@ -3512,7 +3511,7 @@ mark {
 }
 
 .input-group input::placeholder {
-    color: #94a3b8;
+    color: #6b7280;
     font-weight: 400;
 }
 
@@ -3526,7 +3525,7 @@ mark {
     transform: translateY(-1px);
 }
 
-.input-group input:focus + i {
+.input-group:focus-within > i {
     color: #3b82f6;
     transform: scale(1.1);
 }
@@ -3584,7 +3583,20 @@ mark {
 }
 
 .checkbox-label input[type="checkbox"] {
-    display: none;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.checkbox-label input[type="checkbox"]:focus-visible + .checkmark {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
 }
 
 .checkmark {
@@ -3706,9 +3718,9 @@ mark {
 }
 
 .divider span {
-    background: white;
+    background: #f8fafc;
     padding: 0 1rem;
-    color: #999;
+    color: #6b7280;
     font-size: 0.9rem;
 }
 
