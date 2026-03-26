@@ -3539,7 +3539,7 @@ mark {
     background-size: 400% 400%;
     animation: gradientShift 12s ease infinite;
     color: white;
-    padding: 2rem 2rem;
+    padding: 1.5rem 2rem;
     text-align: center;
     position: relative;
     overflow: hidden;
@@ -3568,8 +3568,8 @@ mark {
 }
 
 .login-logo i {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2.25rem;
+    margin-bottom: 0.5rem;
     display: block;
     color: white !important;
     filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
@@ -3584,8 +3584,8 @@ mark {
 }
 
 .login-logo h1 {
-    font-size: 2.2rem;
-    margin: 0 0 0.75rem 0;
+    font-size: 1.75rem;
+    margin: 0 0 0.4rem 0;
     font-weight: 800;
     letter-spacing: -0.5px;
     text-shadow: 0 2px 4px rgba(0,0,0,0.7);
@@ -3607,7 +3607,7 @@ mark {
 }
 
 .login-content {
-    padding: 2rem 2.5rem;
+    padding: 1.5rem 2rem;
     background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
 }
 
@@ -3685,7 +3685,7 @@ mark {
 
 .login-subtitle {
     color: #64748b;
-    margin: 0 0 1.5rem 0;
+    margin: 0 0 1rem 0;
     font-size: 1rem;
     font-weight: 500;
     line-height: 1.5;
@@ -3695,7 +3695,7 @@ mark {
     position: relative;
     display: flex;
     align-items: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.875rem;
 }
 
 .input-group i {
@@ -3764,10 +3764,10 @@ mark {
 
 .form-group label {
     display: block;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.4rem;
     font-weight: 600;
     color: #374151;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     letter-spacing: 0.025em;
 }
 
@@ -3775,7 +3775,7 @@ mark {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 2rem 0;
+    margin: 1rem 0;
 }
 
 .checkbox-label {
@@ -3848,10 +3848,10 @@ mark {
 
 .btn-full {
     width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 0.875rem 1.5rem;
     font-size: 1rem;
     font-weight: 700;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     border-radius: 12px;
     letter-spacing: 0.025em;
     position: relative;
@@ -3882,7 +3882,7 @@ mark {
 
 .btn-google {
     width: 100%;
-    padding: 1rem 1.5rem;
+    padding: 0.875rem 1.5rem;
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     color: #374151;
     border: 2px solid #e5e7eb;
@@ -3913,7 +3913,7 @@ mark {
 
 .divider {
     text-align: center;
-    margin: 1.5rem 0;
+    margin: 1rem 0;
     position: relative;
 }
 
