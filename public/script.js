@@ -3392,42 +3392,68 @@ class TravelPlanner {
 
     // Advanced Search Functionality
     performGlobalSearch(query) {
+        this.updateClearButton();
+
         if (!query || query.length < 2) {
             this.clearSearchResults();
             this.hideSearchSuggestions();
-            this.updateClearButton();
             return;
         }
 
+        // Remove any existing results panel before rendering new ones
+        this.clearSearchResults();
+
         const results = this.searchAllData(query);
         this.displaySearchResults(results, query);
-        this.updateClearButton();
     }
 
     showSearchSuggestions() {
-        const suggestions = [
-            'Paris, France',
-            'Tokyo, Japan',
-            'New York, USA',
-            'London, UK',
-            'Sydney, Australia',
-            'Packing List',
-            'Passport',
-            'Visa',
-            'Hotel Booking',
-            'Flight Tickets'
+        const input = document.getElementById('global-search');
+        const query = (input ? input.value : '').toLowerCase().trim();
+
+        // Build suggestion pool: real trip destinations + document types + popular destinations
+        const tripDestinations = this.trips.map(t => t.destination).filter(Boolean);
+        const tripNames = this.trips.map(t => t.name).filter(Boolean);
+        const popularDestinations = [
+            'Paris, France', 'Tokyo, Japan', 'New York, USA', 'London, UK',
+            'Sydney, Australia', 'Bali, Indonesia', 'Rome, Italy', 'Barcelona, Spain',
+            'Bangkok, Thailand', 'Dubai, UAE', 'Amsterdam, Netherlands', 'Cancun, Mexico'
         ];
+        const keywords = ['Passport', 'Visa', 'Hotel Booking', 'Flight Tickets', 'Packing List', 'Insurance'];
+
+        // Deduplicate and merge
+        const allSuggestions = [...new Set([...tripNames, ...tripDestinations, ...popularDestinations, ...keywords])];
+
+        // Filter by current input if any, otherwise show recent trips + popular places
+        let filtered;
+        if (query.length >= 1) {
+            filtered = allSuggestions.filter(s => s.toLowerCase().includes(query));
+        } else {
+            // Show trip names first, then popular destinations (up to 8 total)
+            filtered = [...tripNames.slice(0, 3), ...popularDestinations.slice(0, 5)];
+        }
+        filtered = filtered.slice(0, 8);
 
         const suggestionsContainer = document.getElementById('search-suggestions');
-        if (suggestionsContainer) {
-            const content = suggestionsContainer.querySelector('.search-dropdown-content');
-            if (content) {
-                content.innerHTML = suggestions.map(suggestion => 
-                    `<div class="search-suggestion" onclick="travelPlanner.selectSuggestion('${suggestion}')">${suggestion}</div>`
-                ).join('');
-                suggestionsContainer.classList.add('show');
-            }
+        if (!suggestionsContainer) return;
+
+        const content = suggestionsContainer.querySelector('.search-dropdown-content');
+        if (!content) return;
+
+        if (filtered.length === 0) {
+            suggestionsContainer.classList.remove('show');
+            return;
         }
+
+        content.innerHTML = filtered.map(suggestion => {
+            const safe = this.escapeHtml(suggestion);
+            const highlighted = query.length >= 1
+                ? safe.replace(new RegExp(`(${this.escapeRegex(query)})`, 'gi'), '<mark>$1</mark>')
+                : safe;
+            return `<div class="search-suggestion" role="option"
+                         onclick="travelPlanner.selectSuggestion('${safe.replace(/'/g, '&#39;')}')">${highlighted}</div>`;
+        }).join('');
+        suggestionsContainer.classList.add('show');
     }
 
     hideSearchSuggestions() {
@@ -3566,59 +3592,85 @@ class TravelPlanner {
 
     displaySearchResults(results, query) {
         const totalResults = results.trips.length + results.packingLists.length + results.documents.length + results.photos.length;
-        
+        const safeQuery = this.escapeHtml(query);
+
         if (totalResults === 0) {
-            this.showNotification(`No results found for "${query}"`, 'info');
+            this.showNotification(`No results found for "${safeQuery}"`, 'info');
             return;
         }
+
+        // Update search input aria state
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) searchInput.setAttribute('aria-expanded', 'true');
 
         // Create search results modal
         const modal = document.createElement('div');
         modal.className = 'modal active';
         modal.id = 'search-results-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', `Search results for ${safeQuery}`);
         modal.innerHTML = `
             <div class="modal-content large">
                 <div class="modal-header">
-                    <h3><i class="fas fa-search"></i> Search Results for "${query}"</h3>
-                    <button class="close-btn" onclick="this.closest('.modal').remove()">
-                        <i class="fas fa-times"></i>
+                    <h3><i class="fas fa-search" aria-hidden="true"></i> Results for &ldquo;${safeQuery}&rdquo;
+                        <span class="search-result-count">${totalResults} found</span>
+                    </h3>
+                    <button class="close-btn" aria-label="Close search results"
+                            onclick="this.closest('.modal').remove(); travelPlanner.onSearchModalClose();">
+                        <i class="fas fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <div class="search-summary">
-                        <p>Found ${totalResults} result${totalResults !== 1 ? 's' : ''} across all sections</p>
-                    </div>
                     <div class="search-results">
                         ${this.renderSearchResults(results)}
                     </div>
                 </div>
             </div>
         `;
+
+        // Close when clicking the backdrop
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                this.onSearchModalClose();
+            }
+        });
+
         document.body.appendChild(modal);
     }
 
+    onSearchModalClose() {
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) searchInput.setAttribute('aria-expanded', 'false');
+    }
+
     renderSearchResults(results) {
+        const term = this.getSearchTerm();
         let html = '';
 
         // Trips
         if (results.trips.length > 0) {
             html += `
                 <div class="search-section">
-                    <h4><i class="fas fa-map-marked-alt"></i> Trips (${results.trips.length})</h4>
+                    <h4><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Trips (${results.trips.length})</h4>
                     <div class="search-items">
                         ${results.trips.sort((a, b) => b.relevance - a.relevance).map(trip => `
-                            <div class="search-item" onclick="travelPlanner.showTripDetailsModal('${trip.id}'); this.closest('.modal').remove()">
+                            <div class="search-item" role="button" tabindex="0"
+                                 onclick="travelPlanner.viewTrip('${this.escapeHtml(trip.id)}'); this.closest('.modal').remove(); travelPlanner.onSearchModalClose();"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){this.click();}">
                                 <div class="search-item-header">
-                                    <h5>${this.highlightSearchTerm(trip.name, this.getSearchTerm())}</h5>
+                                    <h5>${this.highlightSearchTerm(trip.name, term)}</h5>
                                     <span class="search-item-type">Trip</span>
                                 </div>
                                 <div class="search-item-details">
-                                    <p><strong>Destination:</strong> ${this.highlightSearchTerm(trip.destination, this.getSearchTerm())}</p>
-                                    <p><strong>Type:</strong> ${trip.type}</p>
-                                    <p><strong>Dates:</strong> ${this.formatDate(trip.startDate)} - ${this.formatDate(trip.endDate)}</p>
+                                    <p><strong>Destination:</strong> ${this.highlightSearchTerm(trip.destination, term)}</p>
+                                    <p><strong>Type:</strong> ${this.escapeHtml(trip.type)}</p>
+                                    <p><strong>Dates:</strong> ${this.escapeHtml(this.formatDate(trip.startDate))} – ${this.escapeHtml(this.formatDate(trip.endDate))}</p>
+                                    ${trip.budget ? `<p><strong>Budget:</strong> ${this.escapeHtml(this.formatCurrency(trip.budget))}</p>` : ''}
                                 </div>
                                 <div class="search-item-matches">
-                                    <small>Matched in: ${trip.matches.join(', ')}</small>
+                                    <small>Matched in: ${trip.matches.map(m => this.escapeHtml(m)).join(', ')}</small>
                                 </div>
                             </div>
                         `).join('')}
@@ -3631,20 +3683,22 @@ class TravelPlanner {
         if (results.packingLists.length > 0) {
             html += `
                 <div class="search-section">
-                    <h4><i class="fas fa-suitcase"></i> Packing Lists (${results.packingLists.length})</h4>
+                    <h4><i class="fas fa-suitcase" aria-hidden="true"></i> Packing Lists (${results.packingLists.length})</h4>
                     <div class="search-items">
                         ${results.packingLists.sort((a, b) => b.relevance - a.relevance).map(list => `
-                            <div class="search-item" onclick="travelPlanner.showSection('packing'); this.closest('.modal').remove()">
+                            <div class="search-item" role="button" tabindex="0"
+                                 onclick="travelPlanner.showSection('packing'); this.closest('.modal').remove(); travelPlanner.onSearchModalClose();"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){this.click();}">
                                 <div class="search-item-header">
-                                    <h5>${this.highlightSearchTerm(list.name, this.getSearchTerm())}</h5>
+                                    <h5>${this.highlightSearchTerm(list.name, term)}</h5>
                                     <span class="search-item-type">Packing List</span>
                                 </div>
                                 <div class="search-item-details">
-                                    <p><strong>Trip:</strong> ${list.tripName}</p>
-                                    <p><strong>Categories:</strong> ${list.categories.join(', ')}</p>
+                                    <p><strong>Trip:</strong> ${this.escapeHtml(list.tripName)}</p>
+                                    <p><strong>Categories:</strong> ${list.categories.map(c => this.escapeHtml(c)).join(', ')}</p>
                                 </div>
                                 <div class="search-item-matches">
-                                    <small>Matched in: ${list.matches.join(', ')}</small>
+                                    <small>Matched in: ${list.matches.map(m => this.escapeHtml(m)).join(', ')}</small>
                                 </div>
                             </div>
                         `).join('')}
@@ -3657,21 +3711,23 @@ class TravelPlanner {
         if (results.documents.length > 0) {
             html += `
                 <div class="search-section">
-                    <h4><i class="fas fa-file-alt"></i> Documents (${results.documents.length})</h4>
+                    <h4><i class="fas fa-file-alt" aria-hidden="true"></i> Documents (${results.documents.length})</h4>
                     <div class="search-items">
                         ${results.documents.sort((a, b) => b.relevance - a.relevance).map(doc => `
-                            <div class="search-item" onclick="travelPlanner.showSection('documents'); this.closest('.modal').remove()">
+                            <div class="search-item" role="button" tabindex="0"
+                                 onclick="travelPlanner.showSection('documents'); this.closest('.modal').remove(); travelPlanner.onSearchModalClose();"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){this.click();}">
                                 <div class="search-item-header">
-                                    <h5>${this.highlightSearchTerm(doc.name, this.getSearchTerm())}</h5>
+                                    <h5>${this.highlightSearchTerm(doc.name, term)}</h5>
                                     <span class="search-item-type">Document</span>
                                 </div>
                                 <div class="search-item-details">
-                                    <p><strong>Type:</strong> ${doc.type}</p>
-                                    <p><strong>Trip:</strong> ${doc.tripName}</p>
-                                    ${doc.expiryDate ? `<p><strong>Expires:</strong> ${this.formatDate(doc.expiryDate)}</p>` : ''}
+                                    <p><strong>Type:</strong> ${this.escapeHtml(doc.type)}</p>
+                                    <p><strong>Trip:</strong> ${this.escapeHtml(doc.tripName)}</p>
+                                    ${doc.expiryDate ? `<p><strong>Expires:</strong> ${this.escapeHtml(this.formatDate(doc.expiryDate))}</p>` : ''}
                                 </div>
                                 <div class="search-item-matches">
-                                    <small>Matched in: ${doc.matches.join(', ')}</small>
+                                    <small>Matched in: ${doc.matches.map(m => this.escapeHtml(m)).join(', ')}</small>
                                 </div>
                             </div>
                         `).join('')}
@@ -3684,21 +3740,23 @@ class TravelPlanner {
         if (results.photos.length > 0) {
             html += `
                 <div class="search-section">
-                    <h4><i class="fas fa-images"></i> Photos (${results.photos.length})</h4>
+                    <h4><i class="fas fa-images" aria-hidden="true"></i> Photos (${results.photos.length})</h4>
                     <div class="search-items">
                         ${results.photos.sort((a, b) => b.relevance - a.relevance).map(photo => `
-                            <div class="search-item" onclick="travelPlanner.viewPhoto('${photo.id}'); this.closest('.modal').remove()">
+                            <div class="search-item" role="button" tabindex="0"
+                                 onclick="travelPlanner.viewPhoto && travelPlanner.viewPhoto('${this.escapeHtml(photo.id)}'); this.closest('.modal').remove(); travelPlanner.onSearchModalClose();"
+                                 onkeydown="if(event.key==='Enter'||event.key===' '){this.click();}">
                                 <div class="search-item-header">
-                                    <h5>${photo.caption || 'Untitled Photo'}</h5>
+                                    <h5>${this.escapeHtml(photo.caption || 'Untitled Photo')}</h5>
                                     <span class="search-item-type">Photo</span>
                                 </div>
                                 <div class="search-item-details">
-                                    <p><strong>Trip:</strong> ${photo.tripName}</p>
-                                    <p><strong>File:</strong> ${photo.fileName}</p>
-                                    <p><strong>Date:</strong> ${this.formatDate(photo.date)}</p>
+                                    <p><strong>Trip:</strong> ${this.escapeHtml(photo.tripName)}</p>
+                                    <p><strong>File:</strong> ${this.escapeHtml(photo.fileName)}</p>
+                                    <p><strong>Date:</strong> ${this.escapeHtml(this.formatDate(photo.date))}</p>
                                 </div>
                                 <div class="search-item-matches">
-                                    <small>Matched in: ${photo.matches.join(', ')}</small>
+                                    <small>Matched in: ${photo.matches.map(m => this.escapeHtml(m)).join(', ')}</small>
                                 </div>
                             </div>
                         `).join('')}
@@ -3707,13 +3765,18 @@ class TravelPlanner {
             `;
         }
 
-        return html;
+        return html || '<p class="search-no-results">No matching results found.</p>';
+    }
+
+    escapeRegex(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     highlightSearchTerm(text, searchTerm) {
-        if (!searchTerm) return text;
-        const regex = new RegExp(`(${searchTerm})`, 'gi');
-        return text.replace(regex, '<mark>$1</mark>');
+        if (!searchTerm || !text) return this.escapeHtml(text || '');
+        const safe = this.escapeHtml(text);
+        const escaped = this.escapeRegex(searchTerm);
+        return safe.replace(new RegExp(`(${escaped})`, 'gi'), '<mark>$1</mark>');
     }
 
     getSearchTerm() {
