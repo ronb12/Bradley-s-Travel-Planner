@@ -531,10 +531,10 @@
                         <h3>API Integrations</h3>
                         <div class="setting-item setting-item--col">
                             <label for="tp-api-key">TravelPayouts API Key</label>
-                            <p class="setting-description">Required for live flight and hotel prices. <a href="https://www.travelpayouts.com/programs/100/tools/api" target="_blank" rel="noopener">Get a free key →</a></p>
+                            <p class="setting-description">Required for live flight and hotel prices. <a href="https://www.travelpayouts.com/programs/100/tools/api" target="_blank" rel="noopener">Get a free key →</a><br>Your token is a 32-character string found in your TravelPayouts account under <strong>API &amp; Data → Access Token</strong>.</p>
                             <div class="input-group">
                                 <i class="fas fa-key" aria-hidden="true"></i>
-                                <input type="password" id="tp-api-key" placeholder="Paste your TravelPayouts token here"
+                                <input type="password" id="tp-api-key" placeholder="e.g. a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
                                        autocomplete="off" oninput="travelPlanner.saveTpApiKey(this.value)">
                                 <button type="button" class="password-toggle" aria-label="Show API key"
                                         onclick="togglePassword('tp-api-key', this)">

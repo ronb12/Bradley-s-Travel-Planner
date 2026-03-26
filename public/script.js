@@ -23,7 +23,8 @@ class TravelPlanner {
         this.settings = this.loadSettings();
         this.packingLists = this.loadPackingLists();
         this.documents = this.loadDocuments();
-        this.photos = this.loadPhotos();
+        this.photos = [];          // initialise empty; loadPhotos() populates async
+        this.loadPhotos();
         this.currentTripId = null;
         this.currentMonth = new Date();
         this.searchQuery = '';
