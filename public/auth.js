@@ -179,8 +179,22 @@ class AuthManager {
     }
 
     async signUpWithGoogle() {
-        // Same as sign in for Google
-        await this.signInWithGoogle();
+        try {
+            this.showLoading('Signing up with Google...');
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            // Show appropriate message based on whether this is a new or existing account
+            const isNewUser = result._tokenResponse?.isNewUser;
+            this.showNotification(
+                isNewUser ? 'Account created with Google!' : 'Signed in with Google!',
+                'success'
+            );
+        } catch (error) {
+            console.error('Google sign up error:', error);
+            this.handleAuthError(error);
+        } finally {
+            this.hideLoading();
+        }
     }
 
     showForgotPassword() {
