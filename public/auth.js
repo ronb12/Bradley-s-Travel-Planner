@@ -269,8 +269,14 @@ class AuthManager {
 
     handleAuthError(error) {
         let message = 'An error occurred. Please try again.';
-        
+
         switch (error.code) {
+            // Firebase Auth SDK v9+ returns auth/invalid-credential for
+            // wrong password or user-not-found (replaces the deprecated codes below)
+            case 'auth/invalid-credential':
+                message = 'Incorrect email or password. Please try again.';
+                break;
+            // Legacy codes kept for older SDK versions / emulator responses
             case 'auth/user-not-found':
                 message = 'No account found with this email address.';
                 break;
@@ -292,8 +298,14 @@ class AuthManager {
             case 'auth/network-request-failed':
                 message = 'Network error. Please check your connection.';
                 break;
+            case 'auth/popup-closed-by-user':
+                message = 'Sign-in popup was closed. Please try again.';
+                break;
+            case 'auth/popup-blocked':
+                message = 'Sign-in popup was blocked by your browser. Please allow popups and try again.';
+                break;
         }
-        
+
         this.showNotification(message, 'error');
     }
 
