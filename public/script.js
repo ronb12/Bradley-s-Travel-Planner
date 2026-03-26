@@ -232,6 +232,10 @@ class TravelPlanner {
             this.updateTripsDisplay();
         } else if (sectionName === 'budget') {
             this.updateBudgetDisplay();
+        } else if (sectionName === 'prices') {
+            this.initPricesSection();
+        } else if (sectionName === 'settings') {
+            this.initSettingsSection();
         }
     }
 
@@ -2308,7 +2312,8 @@ class TravelPlanner {
     getDefaultSettings() {
         return {
             currency: 'USD',
-            theme: 'light'
+            theme: 'light',
+            tpApiKey: ''
         };
     }
 
@@ -4302,6 +4307,248 @@ class TravelPlanner {
 
     showPrivacy() {
         alert('Privacy Policy: Your data is stored securely and will not be shared with third parties. This is a demo application.');
+    }
+
+    // ── Settings section init ──────────────────────────────────────────────
+    initSettingsSection() {
+        const keyInput = document.getElementById('tp-api-key');
+        if (keyInput && this.settings.tpApiKey) {
+            keyInput.value = this.settings.tpApiKey;
+        }
+        const currencySelect = document.getElementById('currency');
+        if (currencySelect && this.settings.currency) {
+            currencySelect.value = this.settings.currency;
+        }
+    }
+
+    saveTpApiKey(value) {
+        this.settings.tpApiKey = value.trim();
+        this.saveSettings();
+    }
+
+    // ── TravelPayouts Prices Section ───────────────────────────────────────
+    initPricesSection() {
+        const apiKey = this.settings.tpApiKey;
+        const notice  = document.getElementById('tp-setup-notice');
+        const searchArea = document.getElementById('tp-search-area');
+        if (!apiKey) {
+            if (notice) notice.style.display = 'flex';
+            if (searchArea) searchArea.style.display = 'none';
+        } else {
+            if (notice) notice.style.display = 'none';
+            if (searchArea) searchArea.style.display = 'block';
+        }
+    }
+
+    switchPriceTab(tab) {
+        document.querySelectorAll('.price-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+            btn.setAttribute('aria-selected', btn.dataset.tab === tab ? 'true' : 'false');
+        });
+        document.querySelectorAll('.price-panel').forEach(panel => {
+            panel.classList.toggle('active', panel.id === `${tab}-search-panel`);
+        });
+    }
+
+    async searchFlights() {
+        const origin      = (document.getElementById('flight-origin')?.value || '').toUpperCase().trim();
+        const destination = (document.getElementById('flight-destination')?.value || '').toUpperCase().trim();
+        const date        = document.getElementById('flight-date')?.value || '';
+        const currency    = document.getElementById('flight-currency')?.value || 'USD';
+        const resultsEl   = document.getElementById('flight-results');
+        const token       = this.settings.tpApiKey;
+
+        if (!origin || origin.length !== 3) {
+            this.showNotification('Enter a valid 3-letter origin code (e.g. JFK)', 'error'); return;
+        }
+        if (!destination || destination.length !== 3) {
+            this.showNotification('Enter a valid 3-letter destination code (e.g. LAX)', 'error'); return;
+        }
+        if (!date) {
+            this.showNotification('Please select a month', 'error'); return;
+        }
+
+        resultsEl.innerHTML = '<div class="price-loading"><i class="fas fa-spinner fa-spin"></i> Searching flights…</div>';
+
+        try {
+            // TravelPayouts Aviasales cheap-tickets API
+            const params = new URLSearchParams({
+                origin,
+                destination,
+                depart_date: date,      // YYYY-MM
+                currency,
+                token,
+                limit: 10,
+                sorting: 'price',
+                show_to_affiliates: true
+            });
+            const res = await fetch(`https://api.travelpayouts.com/v1/prices/cheap?${params}`, {
+                headers: { 'Accept-Encoding': 'gzip, deflate, br' }
+            });
+            if (!res.ok) throw new Error(`API error ${res.status}`);
+            const data = await res.json();
+            this.renderFlightResults(data, origin, destination, currency, resultsEl);
+        } catch (err) {
+            console.error('Flight search error:', err);
+            resultsEl.innerHTML = `
+                <div class="price-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Could not fetch flight prices. Check your API key or try again.</p>
+                    <small>${this.escapeHtml(err.message)}</small>
+                </div>`;
+        }
+    }
+
+    renderFlightResults(data, origin, destination, currency, container) {
+        const dest = data.data?.[destination];
+        if (!dest || Object.keys(dest).length === 0) {
+            container.innerHTML = '<div class="price-empty"><i class="fas fa-plane-slash"></i><p>No flights found for this route and month.</p></div>';
+            return;
+        }
+
+        const currencySymbols = { USD:'$', EUR:'€', GBP:'£' };
+        const symbol = currencySymbols[currency] || currency;
+
+        const flights = Object.values(dest).sort((a, b) => a.price - b.price);
+        container.innerHTML = `
+            <div class="price-results-header">
+                <h3><i class="fas fa-plane" aria-hidden="true"></i>
+                    ${this.escapeHtml(origin)} → ${this.escapeHtml(destination)}
+                    <span class="results-count">${flights.length} options</span>
+                </h3>
+            </div>
+            <div class="price-cards">
+                ${flights.map(f => `
+                    <div class="price-card">
+                        <div class="price-card-main">
+                            <div class="price-amount">${symbol}${f.price.toLocaleString()}</div>
+                            <div class="price-label">${currency}</div>
+                        </div>
+                        <div class="price-card-details">
+                            <div class="price-detail">
+                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                                <span>${this.escapeHtml(f.depart_date || '—')}</span>
+                            </div>
+                            ${f.return_date ? `<div class="price-detail">
+                                <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                <span>Return: ${this.escapeHtml(f.return_date)}</span>
+                            </div>` : ''}
+                            <div class="price-detail">
+                                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                                <span>${f.number_of_changes === 0 ? 'Non-stop' : f.number_of_changes + ' stop(s)'}</span>
+                            </div>
+                            ${f.airline ? `<div class="price-detail">
+                                <i class="fas fa-plane" aria-hidden="true"></i>
+                                <span>${this.escapeHtml(f.airline)}</span>
+                            </div>` : ''}
+                        </div>
+                        <a href="https://www.aviasales.com/search/${this.escapeHtml(origin)}${(f.depart_date||'').replace(/-/g,'').slice(2)}${this.escapeHtml(destination)}1"
+                           target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                            Book <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                        </a>
+                    </div>
+                `).join('')}
+            </div>
+            <p class="price-attribution">Prices from <a href="https://travelpayouts.com" target="_blank" rel="noopener">TravelPayouts</a> · May vary at booking</p>
+        `;
+    }
+
+    async searchHotels() {
+        const location  = (document.getElementById('hotel-location')?.value || '').trim();
+        const checkIn   = document.getElementById('hotel-checkin')?.value || '';
+        const checkOut  = document.getElementById('hotel-checkout')?.value || '';
+        const adults    = document.getElementById('hotel-adults')?.value || '2';
+        const resultsEl = document.getElementById('hotel-results');
+        const token     = this.settings.tpApiKey;
+        const currency  = this.settings.currency || 'USD';
+
+        if (!location) { this.showNotification('Enter a city or location', 'error'); return; }
+        if (!checkIn)  { this.showNotification('Select a check-in date', 'error'); return; }
+        if (!checkOut) { this.showNotification('Select a check-out date', 'error'); return; }
+        if (checkOut <= checkIn) { this.showNotification('Check-out must be after check-in', 'error'); return; }
+
+        resultsEl.innerHTML = '<div class="price-loading"><i class="fas fa-spinner fa-spin"></i> Searching hotels…</div>';
+
+        try {
+            const params = new URLSearchParams({
+                location,
+                checkIn,
+                checkOut,
+                adults,
+                currency,
+                token,
+                limit: 10,
+                lang: 'en'
+            });
+            const res = await fetch(`https://engine.hotellook.com/api/v2/cache.json?${params}`);
+            if (!res.ok) throw new Error(`API error ${res.status}`);
+            const data = await res.json();
+            this.renderHotelResults(data, location, checkIn, checkOut, currency, resultsEl);
+        } catch (err) {
+            console.error('Hotel search error:', err);
+            resultsEl.innerHTML = `
+                <div class="price-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Could not fetch hotel prices. Check your API key or try again.</p>
+                    <small>${this.escapeHtml(err.message)}</small>
+                </div>`;
+        }
+    }
+
+    renderHotelResults(hotels, location, checkIn, checkOut, currency, container) {
+        if (!hotels || hotels.length === 0) {
+            container.innerHTML = '<div class="price-empty"><i class="fas fa-hotel"></i><p>No hotels found for this location and dates.</p></div>';
+            return;
+        }
+
+        const currencySymbols = { USD:'$', EUR:'€', GBP:'£' };
+        const symbol = currencySymbols[currency] || currency;
+        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+
+        container.innerHTML = `
+            <div class="price-results-header">
+                <h3><i class="fas fa-hotel" aria-hidden="true"></i>
+                    Hotels in ${this.escapeHtml(location)}
+                    <span class="results-count">${hotels.length} found · ${nights} night${nights !== 1 ? 's' : ''}</span>
+                </h3>
+            </div>
+            <div class="price-cards">
+                ${hotels.map(h => {
+                    const pricePerNight = h.priceFrom ? Math.round(h.priceFrom / (nights || 1)) : null;
+                    return `
+                    <div class="price-card">
+                        <div class="price-card-main">
+                            ${pricePerNight
+                                ? `<div class="price-amount">${symbol}${pricePerNight.toLocaleString()}</div>
+                                   <div class="price-label">per night</div>`
+                                : `<div class="price-amount">–</div><div class="price-label">Price N/A</div>`}
+                        </div>
+                        <div class="price-card-details">
+                            <div class="price-detail hotel-name">
+                                <i class="fas fa-hotel" aria-hidden="true"></i>
+                                <strong>${this.escapeHtml(h.hotelName || 'Unknown Hotel')}</strong>
+                            </div>
+                            ${h.stars ? `<div class="price-detail">
+                                <span class="hotel-stars">${'★'.repeat(Math.min(h.stars, 5))}</span>
+                            </div>` : ''}
+                            ${h.location?.name ? `<div class="price-detail">
+                                <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                <span>${this.escapeHtml(h.location.name)}</span>
+                            </div>` : ''}
+                            ${pricePerNight ? `<div class="price-detail">
+                                <i class="fas fa-receipt" aria-hidden="true"></i>
+                                <span>Total: ${symbol}${h.priceFrom.toLocaleString()} for ${nights} night${nights !== 1 ? 's' : ''}</span>
+                            </div>` : ''}
+                        </div>
+                        <a href="https://www.hotellook.com/hotels?destination=${encodeURIComponent(location)}&checkIn=${this.escapeHtml(checkIn)}&checkOut=${this.escapeHtml(checkOut)}&adults=${adults}"
+                           target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                            Book <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                        </a>
+                    </div>`;
+                }).join('')}
+            </div>
+            <p class="price-attribution">Prices from <a href="https://hotellook.com" target="_blank" rel="noopener">Hotellook / TravelPayouts</a> · May vary at booking</p>
+        `;
     }
 }
 

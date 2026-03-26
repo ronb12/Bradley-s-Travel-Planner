@@ -108,6 +108,10 @@
                         <i class="fas fa-file-alt" aria-hidden="true"></i>
                         <span class="nav-text">Documents</span>
                     </button>
+                    <button class="nav-btn" data-section="prices" aria-label="Go to Travel Prices" onclick="showSection('prices')">
+                        <i class="fas fa-tags" aria-hidden="true"></i>
+                        <span class="nav-text">Prices</span>
+                    </button>
                     <button class="nav-btn" data-section="settings" aria-label="Go to Settings" onclick="showSection('settings')">
                         <i class="fas fa-cog" aria-hidden="true"></i>
                         <span class="nav-text">Settings</span>
@@ -310,6 +314,131 @@
             </section>
 
             <!-- Settings Section -->
+            <!-- Travel Prices Section -->
+            <section id="prices" class="content-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tags" aria-hidden="true"></i> Travel Prices</h2>
+                    <p>Search live flight and hotel prices powered by TravelPayouts</p>
+                </div>
+
+                <!-- Setup notice (shown when no API key) -->
+                <div id="tp-setup-notice" class="tp-notice" style="display:none">
+                    <div class="tp-notice-content">
+                        <i class="fas fa-key" aria-hidden="true"></i>
+                        <h3>API Key Required</h3>
+                        <p>Add your free TravelPayouts API key in Settings to search live prices.</p>
+                        <a href="https://www.travelpayouts.com/programs/100/tools/api" target="_blank" rel="noopener" class="btn btn-secondary">
+                            <i class="fas fa-external-link-alt" aria-hidden="true"></i> Get Free API Key
+                        </a>
+                        <button class="btn btn-primary" onclick="travelPlanner.showSection('settings')">
+                            <i class="fas fa-cog" aria-hidden="true"></i> Go to Settings
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Search area (shown when API key exists) -->
+                <div id="tp-search-area">
+                    <!-- Tabs -->
+                    <div class="price-tabs" role="tablist">
+                        <button class="price-tab active" role="tab" aria-selected="true" data-tab="flights"
+                                onclick="travelPlanner.switchPriceTab('flights')">
+                            <i class="fas fa-plane" aria-hidden="true"></i> Flights
+                        </button>
+                        <button class="price-tab" role="tab" aria-selected="false" data-tab="hotels"
+                                onclick="travelPlanner.switchPriceTab('hotels')">
+                            <i class="fas fa-hotel" aria-hidden="true"></i> Hotels
+                        </button>
+                    </div>
+
+                    <!-- Flight Search -->
+                    <div id="flight-search-panel" class="price-panel active" role="tabpanel">
+                        <div class="price-search-card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="flight-origin">From (IATA code)</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-plane-departure" aria-hidden="true"></i>
+                                        <input type="text" id="flight-origin" placeholder="e.g. JFK" maxlength="3"
+                                               autocomplete="off" style="text-transform:uppercase">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="flight-destination">To (IATA code)</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-plane-arrival" aria-hidden="true"></i>
+                                        <input type="text" id="flight-destination" placeholder="e.g. LAX" maxlength="3"
+                                               autocomplete="off" style="text-transform:uppercase">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="flight-date">Month</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar" aria-hidden="true"></i>
+                                        <input type="month" id="flight-date">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="flight-currency">Currency</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+                                        <select id="flight-currency">
+                                            <option value="USD">USD</option>
+                                            <option value="EUR">EUR</option>
+                                            <option value="GBP">GBP</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="travelPlanner.searchFlights()">
+                                <i class="fas fa-search" aria-hidden="true"></i> Search Flights
+                            </button>
+                        </div>
+                        <div id="flight-results" class="price-results" role="region" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Hotel Search -->
+                    <div id="hotel-search-panel" class="price-panel" role="tabpanel">
+                        <div class="price-search-card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="hotel-location">City or Location</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                        <input type="text" id="hotel-location" placeholder="e.g. New York"
+                                               autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotel-checkin">Check-in</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                        <input type="date" id="hotel-checkin">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotel-checkout">Check-out</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar-times" aria-hidden="true"></i>
+                                        <input type="date" id="hotel-checkout">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="hotel-adults">Adults</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-user" aria-hidden="true"></i>
+                                        <input type="number" id="hotel-adults" value="2" min="1" max="9">
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="travelPlanner.searchHotels()">
+                                <i class="fas fa-search" aria-hidden="true"></i> Search Hotels
+                            </button>
+                        </div>
+                        <div id="hotel-results" class="price-results" role="region" aria-live="polite"></div>
+                    </div>
+                </div>
+            </section>
+
             <section id="settings" class="content-section">
                 <div class="section-header">
                     <h2>Settings</h2>
@@ -398,6 +527,23 @@
                         </div>
                     </div>
                     
+                    <div class="setting-group">
+                        <h3>API Integrations</h3>
+                        <div class="setting-item setting-item--col">
+                            <label for="tp-api-key">TravelPayouts API Key</label>
+                            <p class="setting-description">Required for live flight and hotel prices. <a href="https://www.travelpayouts.com/programs/100/tools/api" target="_blank" rel="noopener">Get a free key →</a></p>
+                            <div class="input-group">
+                                <i class="fas fa-key" aria-hidden="true"></i>
+                                <input type="password" id="tp-api-key" placeholder="Paste your TravelPayouts token here"
+                                       autocomplete="off" oninput="travelPlanner.saveTpApiKey(this.value)">
+                                <button type="button" class="password-toggle" aria-label="Show API key"
+                                        onclick="togglePassword('tp-api-key', this)">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="setting-group">
                         <h3>Data Management</h3>
                         <div class="setting-item">
