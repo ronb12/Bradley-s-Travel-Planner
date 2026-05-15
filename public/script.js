@@ -204,13 +204,26 @@ class TravelPlanner {
         if (navButtons.length > 0) {
             navButtons.forEach(btn => {
                 btn.classList.remove('active');
+                btn.removeAttribute('aria-current');
             });
         }
+
+        document.querySelectorAll('.nav-menu-trigger').forEach(trigger => {
+            trigger.classList.remove('active');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
         
         const activeButton = document.querySelector(`[data-section="${sectionName}"]`);
         console.log('Active button found:', activeButton);
         if (activeButton) {
             activeButton.classList.add('active');
+            activeButton.setAttribute('aria-current', 'page');
+
+            const activeGroup = activeButton.dataset.navGroup;
+            const groupTrigger = activeGroup ? document.querySelector(`.nav-menu-trigger[data-group="${activeGroup}"]`) : null;
+            if (groupTrigger) {
+                groupTrigger.classList.add('active');
+            }
         }
 
         // Update content
@@ -4854,6 +4867,13 @@ document.addEventListener('click', (e) => {
     const nav = document.getElementById('main-nav');
     const toggle = document.querySelector('.mobile-menu-toggle');
     
+    document.querySelectorAll('.nav-menu-trigger').forEach(trigger => {
+        const group = trigger.closest('.nav-group');
+        if (group && !group.contains(e.target)) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+
     if (nav && toggle && nav.classList.contains('mobile-open')) {
         if (!nav.contains(e.target) && !toggle.contains(e.target)) {
             nav.classList.remove('mobile-open');
@@ -4863,6 +4883,20 @@ document.addEventListener('click', (e) => {
                 icon.className = 'fas fa-bars';
             }
         }
+    }
+});
+
+document.addEventListener('mouseover', (e) => {
+    const trigger = e.target.closest?.('.nav-menu-trigger');
+    if (trigger) {
+        trigger.setAttribute('aria-expanded', 'true');
+    }
+});
+
+document.addEventListener('focusin', (e) => {
+    const trigger = e.target.closest?.('.nav-menu-trigger');
+    if (trigger) {
+        trigger.setAttribute('aria-expanded', 'true');
     }
 });
 

@@ -89,33 +89,60 @@
                         <i class="fas fa-home" aria-hidden="true"></i>
                         <span class="nav-text">Dashboard</span>
                     </button>
-                    <button class="nav-btn" data-section="trips" aria-label="Go to My Trips" onclick="showSection('trips')">
-                        <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
-                        <span class="nav-text">My Trips</span>
-                    </button>
-                    <button class="nav-btn" data-section="calendar" aria-label="Go to Calendar" onclick="showSection('calendar')">
-                        <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                        <span class="nav-text">Calendar</span>
-                    </button>
-                    <button class="nav-btn" data-section="budget" aria-label="Go to Budget" onclick="showSection('budget')">
-                        <i class="fas fa-calculator" aria-hidden="true"></i>
-                        <span class="nav-text">Budget</span>
-                    </button>
-                    <button class="nav-btn" data-section="packing" aria-label="Go to Packing Lists" onclick="showSection('packing')">
-                        <i class="fas fa-suitcase" aria-hidden="true"></i>
-                        <span class="nav-text">Packing</span>
-                    </button>
-                    <button class="nav-btn" data-section="documents" aria-label="Go to Documents" onclick="showSection('documents')">
-                        <i class="fas fa-file-alt" aria-hidden="true"></i>
-                        <span class="nav-text">Documents</span>
-                    </button>
-                    <button class="nav-btn" data-section="prices" aria-label="Go to Travel Prices" onclick="showSection('prices')">
-                        <i class="fas fa-tags" aria-hidden="true"></i>
-                        <span class="nav-text">Prices</span>
-                    </button>
-                    <button class="nav-btn" data-section="settings" aria-label="Go to Settings" onclick="showSection('settings')">
+                    <div class="nav-group">
+                        <button class="nav-menu-trigger" type="button" data-group="plan" aria-haspopup="true" aria-expanded="false" aria-label="Open planning menu">
+                            <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+                            <span class="nav-text">Plan</span>
+                            <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="nav-dropdown" role="menu" aria-label="Planning tools">
+                            <button class="nav-btn" data-section="trips" data-nav-group="plan" role="menuitem" aria-label="Go to My Trips" onclick="showSection('trips')">
+                                <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
+                                <span class="nav-text">My Trips</span>
+                            </button>
+                            <button class="nav-btn" data-section="calendar" data-nav-group="plan" role="menuitem" aria-label="Go to Calendar" onclick="showSection('calendar')">
+                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                                <span class="nav-text">Calendar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="nav-group">
+                        <button class="nav-menu-trigger" type="button" data-group="manage" aria-haspopup="true" aria-expanded="false" aria-label="Open manage menu">
+                            <i class="fas fa-briefcase" aria-hidden="true"></i>
+                            <span class="nav-text">Manage</span>
+                            <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="nav-dropdown" role="menu" aria-label="Management tools">
+                            <button class="nav-btn" data-section="budget" data-nav-group="manage" role="menuitem" aria-label="Go to Budget" onclick="showSection('budget')">
+                                <i class="fas fa-calculator" aria-hidden="true"></i>
+                                <span class="nav-text">Budget</span>
+                            </button>
+                            <button class="nav-btn" data-section="packing" data-nav-group="manage" role="menuitem" aria-label="Go to Packing Lists" onclick="showSection('packing')">
+                                <i class="fas fa-suitcase" aria-hidden="true"></i>
+                                <span class="nav-text">Packing</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="nav-group">
+                        <button class="nav-menu-trigger" type="button" data-group="tools" aria-haspopup="true" aria-expanded="false" aria-label="Open travel tools menu">
+                            <i class="fas fa-compass" aria-hidden="true"></i>
+                            <span class="nav-text">Travel Tools</span>
+                            <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
+                        </button>
+                        <div class="nav-dropdown" role="menu" aria-label="Travel tools">
+                            <button class="nav-btn" data-section="documents" data-nav-group="tools" role="menuitem" aria-label="Go to Documents" onclick="showSection('documents')">
+                                <i class="fas fa-file-alt" aria-hidden="true"></i>
+                                <span class="nav-text">Documents</span>
+                            </button>
+                            <button class="nav-btn" data-section="prices" data-nav-group="tools" role="menuitem" aria-label="Go to Travel Prices" onclick="showSection('prices')">
+                                <i class="fas fa-tags" aria-hidden="true"></i>
+                                <span class="nav-text">Prices</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="nav-btn" data-section="settings" data-nav-group="account" aria-label="Go to Settings" onclick="showSection('settings')">
                         <i class="fas fa-cog" aria-hidden="true"></i>
-                        <span class="nav-text">Settings</span>
+                        <span class="nav-text">Account</span>
                     </button>
                     <button class="nav-btn sign-out-btn" onclick="signOut()" aria-label="Sign Out">
                         <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
@@ -839,6 +866,6 @@
 
     <script type="module" src="firebase-config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script type="module" src="script.js?v=14"></script>
+    <script type="module" src="script.js?v=15"></script>
 </body>
 </html>
