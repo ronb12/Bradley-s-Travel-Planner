@@ -381,6 +381,203 @@ body {
     text-align: center;
 }
 
+.dashboard-hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+    gap: 2rem;
+    align-items: center;
+    padding: 2.25rem;
+    border-radius: 30px;
+    overflow: hidden;
+    text-align: left;
+    background:
+        radial-gradient(circle at 14% 15%, rgba(255, 255, 255, 0.34), transparent 26%),
+        radial-gradient(circle at 78% 20%, rgba(240, 147, 251, 0.36), transparent 24%),
+        linear-gradient(135deg, #5268db 0%, #6b4fc4 52%, #f08bd8 100%);
+    box-shadow: 0 24px 60px rgba(83, 93, 194, 0.24);
+    color: white;
+}
+
+.dashboard-hero::before {
+    content: '';
+    position: absolute;
+    inset: auto -6rem -8rem auto;
+    width: 24rem;
+    height: 24rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.dashboard-hero::after {
+    content: '';
+    position: absolute;
+    inset: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 24px;
+    pointer-events: none;
+}
+
+.hero-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    margin-bottom: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.92);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.dashboard-hero h2,
+.dashboard-hero p {
+    color: white;
+}
+
+.dashboard-hero h2 {
+    font-size: clamp(2.35rem, 5vw, 4rem);
+    line-height: 0.95;
+    max-width: 760px;
+    text-shadow: 0 8px 24px rgba(35, 42, 92, 0.25);
+}
+
+.dashboard-hero p {
+    max-width: 620px;
+    color: rgba(255, 255, 255, 0.86);
+    font-size: 1.15rem;
+}
+
+.hero-graphic {
+    position: relative;
+    z-index: 1;
+    min-height: 210px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0.1)),
+        radial-gradient(circle at 34% 70%, rgba(255, 255, 255, 0.3), transparent 20%);
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 18px 40px rgba(35, 42, 92, 0.18);
+    backdrop-filter: blur(12px);
+}
+
+.hero-plane {
+    position: absolute;
+    top: 42%;
+    left: 45%;
+    transform: translate(-50%, -50%) rotate(-18deg);
+    width: 88px;
+    height: 88px;
+    display: grid;
+    place-items: center;
+    border-radius: 28px;
+    background: white;
+    color: #5f67d9;
+    font-size: 2.5rem;
+    box-shadow: 0 18px 38px rgba(35, 42, 92, 0.26);
+}
+
+.route-line {
+    position: absolute;
+    top: 48%;
+    left: 18%;
+    width: 64%;
+    border-top: 3px dashed rgba(255, 255, 255, 0.62);
+    transform: rotate(-12deg);
+}
+
+.route-dot,
+.hero-pin {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+}
+
+.route-dot {
+    width: 16px;
+    height: 16px;
+    background: white;
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.18);
+}
+
+.route-dot-start {
+    top: 58%;
+    left: 14%;
+}
+
+.route-dot-end {
+    top: 30%;
+    right: 12%;
+}
+
+.hero-pin {
+    width: 52px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.94);
+    color: #764ba2;
+    font-size: 1.35rem;
+}
+
+.hero-pin-left {
+    left: 12%;
+    top: 18%;
+}
+
+.hero-pin-right {
+    right: 16%;
+    bottom: 15%;
+}
+
+@media (max-width: 900px) {
+    .dashboard-hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 1.75rem;
+    }
+
+    .hero-copy,
+    .dashboard-hero p {
+        margin-inline: auto;
+    }
+
+    .hero-graphic {
+        min-height: 170px;
+    }
+}
+
+@media (max-width: 520px) {
+    .dashboard-hero {
+        padding: 1.35rem;
+        border-radius: 24px;
+    }
+
+    .hero-graphic {
+        min-height: 145px;
+    }
+
+    .hero-plane {
+        width: 68px;
+        height: 68px;
+        font-size: 2rem;
+    }
+
+    .hero-pin {
+        width: 42px;
+        height: 42px;
+        font-size: 1.1rem;
+    }
+}
+
 .section-header h2 {
     font-size: 2.5rem;
     font-weight: 700;
@@ -416,6 +613,8 @@ body {
 }
 
 .dashboard-card {
+    position: relative;
+    isolation: isolate;
     background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
     padding: 2rem;
     border-radius: 20px;
@@ -423,6 +622,48 @@ body {
     text-align: center;
     transition: all 0.3s ease;
     border: 1px solid rgba(102, 126, 234, 0.1);
+    overflow: hidden;
+}
+
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    inset: -45% -35% auto auto;
+    width: 190px;
+    height: 190px;
+    border-radius: 999px;
+    background: rgba(102, 126, 234, 0.08);
+    z-index: -1;
+}
+
+.dashboard-card::after {
+    content: '';
+    position: absolute;
+    inset: auto auto 1.1rem 1.25rem;
+    width: 80px;
+    height: 48px;
+    opacity: 0.12;
+    background-image:
+        radial-gradient(circle, #667eea 2px, transparent 2px),
+        radial-gradient(circle, #f093fb 2px, transparent 2px);
+    background-size: 18px 18px;
+    z-index: -1;
+}
+
+.create-card .card-icon {
+    background: linear-gradient(135deg, #0ea5e9 0%, #667eea 55%, #764ba2 100%);
+}
+
+.trips-card .card-icon {
+    background: linear-gradient(135deg, #14b8a6 0%, #3b82f6 55%, #667eea 100%);
+}
+
+.budget-card .card-icon {
+    background: linear-gradient(135deg, #22c55e 0%, #84cc16 45%, #f59e0b 100%);
+}
+
+.templates-card .card-icon {
+    background: linear-gradient(135deg, #f97316 0%, #ec4899 50%, #8b5cf6 100%);
 }
 
 .dashboard-card:hover {
@@ -445,6 +686,11 @@ body {
     box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
     position: relative;
     overflow: hidden;
+}
+
+.card-icon i {
+    position: relative;
+    z-index: 1;
 }
 
 .card-icon::before {
@@ -1099,11 +1345,26 @@ mark {
 
 /* Recent Trips */
 .recent-trips {
-    background: white;
+    position: relative;
+    overflow: hidden;
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 249, 255, 0.96)),
+        radial-gradient(circle at 92% 10%, rgba(240, 147, 251, 0.16), transparent 26%);
     padding: 2rem;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.recent-trips::before {
+    content: '\f5a0';
+    position: absolute;
+    right: 2rem;
+    top: 1.4rem;
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: rgba(102, 126, 234, 0.1);
+    font-size: 4.2rem;
 }
 
 .recent-trips h3 {
@@ -1122,14 +1383,17 @@ mark {
     justify-content: space-between;
     align-items: center;
     padding: 1rem;
-    background: #f8f9fa;
+    background: rgba(255, 255, 255, 0.84);
     border-radius: 12px;
     transition: all 0.3s ease;
+    border: 1px solid rgba(102, 126, 234, 0.08);
+    box-shadow: 0 8px 22px rgba(102, 126, 234, 0.06);
 }
 
 .trip-item:hover {
-    background: #e9ecef;
+    background: white;
     transform: translateX(5px);
+    border-color: rgba(102, 126, 234, 0.2);
 }
 
 .trip-item-info h4 {
