@@ -4446,16 +4446,14 @@ class TravelPlanner {
             this.renderFlightResults(data, origin, destination, currency, resultsEl);
         } catch (err) {
             console.error('Flight search error:', err);
-            const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
-            const hint = isCors
-                ? 'The API blocked the request (CORS). Make sure your TravelPayouts token is valid — a 32-character string from your account dashboard.'
-                : 'Try a different route or month — prices may not be cached for this combination yet.';
-            resultsEl.innerHTML = `
-                <div class="price-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>${this.escapeHtml(err.message)}</p>
-                    <small>${hint}</small>
-                </div>`;
+            this.renderFlightBookingHandoff(
+                origin,
+                destination,
+                date,
+                currency,
+                resultsEl,
+                `Live fare lookup is temporarily unavailable (${err.message}). Users can still continue to a provider to compare current fares and pay securely there.`
+            );
         }
     }
 
@@ -4513,7 +4511,7 @@ class TravelPlanner {
         `;
     }
 
-    renderFlightBookingHandoff(origin, destination, date, currency, container) {
+    renderFlightBookingHandoff(origin, destination, date, currency, container, message = 'Live fare search needs a TravelPayouts key, but users can still continue to a flight provider to compare current fares and pay securely there.') {
         const bookingUrl = this.buildFlightBookingUrl(origin, destination, date ? `${date}-01` : '');
         const dateLabel = date || 'Flexible dates';
         container.innerHTML = `
@@ -4521,7 +4519,7 @@ class TravelPlanner {
                 <div class="booking-handoff-icon"><i class="fas fa-plane-departure" aria-hidden="true"></i></div>
                 <div class="booking-handoff-copy">
                     <h3>${this.escapeHtml(origin)} to ${this.escapeHtml(destination)}</h3>
-                    <p>Live fare search needs a TravelPayouts key, but users can still continue to a flight provider to compare current fares and pay securely there.</p>
+                    <p>${this.escapeHtml(message)}</p>
                     <div class="booking-meta">
                         <span><i class="fas fa-calendar" aria-hidden="true"></i> ${this.escapeHtml(dateLabel)}</span>
                         <span><i class="fas fa-money-bill" aria-hidden="true"></i> ${this.escapeHtml(currency)}</span>
@@ -4575,13 +4573,15 @@ class TravelPlanner {
             this.renderHotelResults(data, location, checkIn, checkOut, adults, currency, resultsEl);
         } catch (err) {
             console.error('Hotel search error:', err);
-            const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
-            resultsEl.innerHTML = `
-                <div class="price-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <p>${this.escapeHtml(err.message)}</p>
-                    ${isCors ? '<small>The API blocked the request (CORS). Ensure your TravelPayouts token is a valid 32-character string from your account dashboard.</small>' : ''}
-                </div>`;
+            this.renderHotelBookingHandoff(
+                location,
+                checkIn,
+                checkOut,
+                adults,
+                currency,
+                resultsEl,
+                `Live hotel lookup is temporarily unavailable (${err.message}). Users can still continue to a provider to compare current availability and pay securely there.`
+            );
         }
     }
 
@@ -4642,15 +4642,16 @@ class TravelPlanner {
         `;
     }
 
-    renderHotelBookingHandoff(location, checkIn, checkOut, adults, currency, container) {
+    renderHotelBookingHandoff(location, checkIn, checkOut, adults, currency, container, message = 'Continue to a hotel provider to compare live availability, choose a room, and pay securely through the provider checkout.') {
         const bookingUrl = this.buildHotelBookingUrl(location, checkIn, checkOut, adults);
-        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+        const hasDates = Boolean(checkIn && checkOut);
+        const nights = hasDates ? Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000) : null;
         container.innerHTML = `
             <div class="booking-handoff-card">
                 <div class="booking-handoff-icon"><i class="fas fa-hotel" aria-hidden="true"></i></div>
                 <div class="booking-handoff-copy">
                     <h3>Hotels in ${this.escapeHtml(location)}</h3>
-                    <p>Continue to a hotel provider to compare live availability, choose a room, and pay securely through the provider checkout.</p>
+                    <p>${this.escapeHtml(message)}</p>
                     <div class="booking-meta">
                         <span><i class="fas fa-calendar-check" aria-hidden="true"></i> ${hasDates ? `${this.escapeHtml(checkIn)} to ${this.escapeHtml(checkOut)}` : 'Choose dates with provider'}</span>
                         ${hasDates ? `<span><i class="fas fa-moon" aria-hidden="true"></i> ${nights} night${nights !== 1 ? 's' : ''}</span>` : ''}
