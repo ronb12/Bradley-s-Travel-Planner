@@ -33,7 +33,7 @@
     <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png?v=4">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="styles.css?v=18">
+    <link rel="stylesheet" href="styles.css?v=19">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -372,7 +372,7 @@
 
             <!-- Settings Section -->
             <!-- Travel Prices Section -->
-            <section id="prices" class="content-section">
+            <section id="prices" class="content-section content-section--wide">
                 <div class="section-header">
                     <h2><i class="fas fa-tags" aria-hidden="true"></i> Book Travel</h2>
                     <p>Search and continue to provider checkout for flights, hotels, rental cars, and cruises.</p>
@@ -439,12 +439,14 @@
                                     Open Full Listings <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                                 </a>
                             </div>
-                            <iframe id="travelpayouts-listings-frame"
-                                    title="TravelPayouts live travel listings"
-                                    src="https://whitelabel.travelpayouts.com/?marker=511837.book_travel"
-                                    loading="lazy"
-                                    referrerpolicy="no-referrer-when-downgrade"
-                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+                            <div class="live-listings-frame-shell">
+                                <iframe id="travelpayouts-listings-frame"
+                                        title="TravelPayouts live travel listings"
+                                        src="https://whitelabel.travelpayouts.com/?marker=511837.book_travel"
+                                        loading="lazy"
+                                        referrerpolicy="no-referrer-when-downgrade"
+                                        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+                            </div>
                             <p class="price-attribution">Powered by TravelPayouts White Label. No paid supplier API is used; listings and checkout are handled by TravelPayouts and partner providers.</p>
                         </div>
                     </div>

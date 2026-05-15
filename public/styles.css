@@ -447,6 +447,11 @@ body {
     display: block;
 }
 
+.content-section--wide {
+    margin-left: calc(50% - 50vw + 1rem);
+    margin-right: calc(50% - 50vw + 1rem);
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -4871,6 +4876,20 @@ mark {
     box-shadow: 0 18px 45px rgba(102, 126, 234, 0.14);
 }
 
+#prices.content-section.active {
+    display: block;
+}
+
+#prices .section-header,
+#prices #tp-setup-notice,
+#prices .booking-disclaimer,
+#prices .price-tabs,
+#prices .price-panel:not(#live-listings-search-panel) {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .live-listings-header {
     display: flex;
     align-items: flex-start;
@@ -4906,10 +4925,17 @@ mark {
     line-height: 1.55;
 }
 
+.live-listings-frame-shell {
+    height: clamp(980px, calc(100vh - 190px), 1320px);
+    min-height: 980px;
+    background: #f8fafc;
+}
+
 #travelpayouts-listings-frame {
     display: block;
     width: 100%;
-    min-height: 820px;
+    height: 100%;
+    min-height: 980px;
     border: 0;
     background: #f8fafc;
 }
@@ -4923,8 +4949,15 @@ mark {
         flex-direction: column;
     }
 
+    .content-section--wide {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .live-listings-frame-shell,
     #travelpayouts-listings-frame {
-        min-height: 720px;
+        min-height: 780px;
+        height: 780px;
     }
 }
 
