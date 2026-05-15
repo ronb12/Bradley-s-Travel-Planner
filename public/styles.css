@@ -4664,7 +4664,7 @@ mark {
     border: 1px solid rgba(102, 126, 234, 0.16);
     border-radius: 18px;
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(240, 147, 251, 0.08));
-    color: #475569;
+    color: #243247;
 }
 
 .booking-disclaimer i {
@@ -4737,7 +4737,7 @@ mark {
 .price-loading, .price-error, .price-empty {
     text-align: center;
     padding: 3rem 1rem;
-    color: #94a3b8;
+    color: #475569;
 }
 
 .price-loading i, .price-error i, .price-empty i {
@@ -4747,7 +4747,7 @@ mark {
 }
 
 .price-error { color: #ef4444; }
-.price-error small { display: block; margin-top: 0.5rem; font-size: 0.8rem; color: #94a3b8; }
+.price-error small { display: block; margin-top: 0.5rem; font-size: 0.8rem; color: #475569; }
 
 .price-results-header {
     margin-bottom: 1rem;
@@ -4813,7 +4813,7 @@ mark {
 
 .price-label {
     font-size: 0.8rem;
-    color: #94a3b8;
+    color: #475569;
     font-weight: 500;
 }
 
@@ -4829,11 +4829,11 @@ mark {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.85rem;
-    color: #475569;
+    color: #243247;
 }
 
 .price-detail i {
-    color: #94a3b8;
+    color: #4f46e5;
     width: 1rem;
     text-align: center;
     flex-shrink: 0;
@@ -4859,7 +4859,7 @@ mark {
 
 .price-attribution {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: #475569;
     text-align: center;
     margin-top: 0.5rem;
 }
@@ -4921,7 +4921,7 @@ mark {
 .live-listings-header p {
     max-width: 760px;
     margin: 0;
-    color: #64748b;
+    color: #334155;
     line-height: 1.55;
 }
 
@@ -4995,7 +4995,7 @@ mark {
 
 .booking-handoff-copy p {
     margin: 0;
-    color: #64748b;
+    color: #334155;
     line-height: 1.5;
 }
 
@@ -5013,7 +5013,7 @@ mark {
     padding: 0.34rem 0.6rem;
     border-radius: 999px;
     background: rgba(102, 126, 234, 0.09);
-    color: #475569;
+    color: #243247;
     font-size: 0.78rem;
     font-weight: 700;
 }
