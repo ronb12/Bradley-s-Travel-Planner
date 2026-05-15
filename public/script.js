@@ -2333,7 +2333,8 @@ class TravelPlanner {
         return {
             currency: 'USD',
             theme: 'light',
-            tpApiKey: ''
+            tpApiKey: '',
+            tpPartnerMarker: '511837'
         };
     }
 
@@ -4339,11 +4340,21 @@ class TravelPlanner {
         if (currencySelect && this.settings.currency) {
             currencySelect.value = this.settings.currency;
         }
+        const markerInput = document.getElementById('tp-partner-marker');
+        if (markerInput && this.settings.tpPartnerMarker) {
+            markerInput.value = this.settings.tpPartnerMarker;
+        }
     }
 
     saveTpApiKey(value) {
         this.settings.tpApiKey = value.trim();
         this.saveSettings();
+    }
+
+    saveTpPartnerMarker(value) {
+        this.settings.tpPartnerMarker = value.trim();
+        this.saveSettings();
+        this.updateLiveListingsFrame();
     }
 
     // ── TravelPayouts Prices Section ───────────────────────────────────────
@@ -4358,6 +4369,7 @@ class TravelPlanner {
             if (notice) notice.style.display = 'none';
             if (searchArea) searchArea.style.display = 'block';
         }
+        this.updateLiveListingsFrame();
     }
 
     switchPriceTab(tab) {
@@ -4368,6 +4380,30 @@ class TravelPlanner {
         document.querySelectorAll('.price-panel').forEach(panel => {
             panel.classList.toggle('active', panel.id === `${tab}-search-panel`);
         });
+    }
+
+    getTravelPayoutsMarker() {
+        const marker = String(this.settings.tpPartnerMarker || '').trim();
+        return marker || '511837';
+    }
+
+    buildTravelPayoutsWhiteLabelUrl() {
+        const params = new URLSearchParams({
+            marker: `${this.getTravelPayoutsMarker()}.book_travel`
+        });
+        return `https://whitelabel.travelpayouts.com/?${params.toString()}`;
+    }
+
+    updateLiveListingsFrame() {
+        const frame = document.getElementById('travelpayouts-listings-frame');
+        const link = document.getElementById('live-listings-open-link');
+        const url = this.buildTravelPayoutsWhiteLabelUrl();
+        if (frame && frame.src !== url) {
+            frame.src = url;
+        }
+        if (link) {
+            link.href = url;
+        }
     }
 
     async searchFlights() {

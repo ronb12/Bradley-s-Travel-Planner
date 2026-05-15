@@ -402,7 +402,11 @@
                 <div id="tp-search-area">
                     <!-- Tabs -->
                     <div class="price-tabs" role="tablist">
-                        <button class="price-tab active" role="tab" aria-selected="true" data-tab="flights"
+                        <button class="price-tab active" role="tab" aria-selected="true" data-tab="live-listings"
+                                onclick="travelPlanner.switchPriceTab('live-listings')">
+                            <i class="fas fa-list-check" aria-hidden="true"></i> Live Listings
+                        </button>
+                        <button class="price-tab" role="tab" aria-selected="false" data-tab="flights"
                                 onclick="travelPlanner.switchPriceTab('flights')">
                             <i class="fas fa-plane" aria-hidden="true"></i> Flights
                         </button>
@@ -420,8 +424,33 @@
                         </button>
                     </div>
 
+                    <!-- Free Live Listings Embed -->
+                    <div id="live-listings-search-panel" class="price-panel active" role="tabpanel">
+                        <div class="live-listings-card">
+                            <div class="live-listings-header">
+                                <div>
+                                    <span class="eyebrow">Free affiliate listings</span>
+                                    <h3>Live Travel Listings</h3>
+                                    <p>Search real flight and hotel options inside the app through TravelPayouts White Label. Final booking and payment still happen with the selected travel provider.</p>
+                                </div>
+                                <a id="live-listings-open-link"
+                                   href="https://whitelabel.travelpayouts.com/?marker=511837.book_travel"
+                                   target="_blank" rel="noopener" class="btn btn-secondary">
+                                    Open Full Listings <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                                </a>
+                            </div>
+                            <iframe id="travelpayouts-listings-frame"
+                                    title="TravelPayouts live travel listings"
+                                    src="https://whitelabel.travelpayouts.com/?marker=511837.book_travel"
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer-when-downgrade"
+                                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>
+                            <p class="price-attribution">Powered by TravelPayouts White Label. No paid supplier API is used; listings and checkout are handled by TravelPayouts and partner providers.</p>
+                        </div>
+                    </div>
+
                     <!-- Flight Search -->
-                    <div id="flight-search-panel" class="price-panel active" role="tabpanel">
+                    <div id="flight-search-panel" class="price-panel" role="tabpanel">
                         <div class="price-search-card">
                             <div class="form-row">
                                 <div class="form-group">
@@ -709,6 +738,15 @@
                                         onclick="togglePassword('tp-api-key', this)">
                                     <i class="fas fa-eye" aria-hidden="true"></i>
                                 </button>
+                            </div>
+                        </div>
+                        <div class="setting-item setting-item--col">
+                            <label for="tp-partner-marker">TravelPayouts Partner Marker</label>
+                            <p class="setting-description">Used for the free embedded Live Listings / White Label experience so bookings can be tracked to your affiliate account.</p>
+                            <div class="input-group">
+                                <i class="fas fa-link" aria-hidden="true"></i>
+                                <input type="text" id="tp-partner-marker" placeholder="e.g. 511837"
+                                       autocomplete="off" oninput="travelPlanner.saveTpPartnerMarker(this.value)">
                             </div>
                         </div>
                     </div>
@@ -1007,6 +1045,6 @@
 
     <script type="module" src="firebase-config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script type="module" src="script.js?v=19"></script>
+    <script type="module" src="script.js?v=20"></script>
 </body>
 </html>
