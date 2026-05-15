@@ -2103,31 +2103,37 @@ class TravelPlanner {
     }
 
     calculateDuration(startDate, endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const start = this.parseLocalDate(startDate);
+        const end = this.parseLocalDate(endDate);
         const diffTime = Math.abs(end - start);
         return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
     }
 
     formatCurrency(amount) {
         const currency = this.settings.currency || 'USD';
-        const symbols = {
-            'USD': '$',
-            'EUR': '€',
-            'GBP': '£',
-            'CAD': 'C$'
-        };
-        
-        return `${symbols[currency]}${amount.toFixed(2)}`;
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency,
+            minimumFractionDigits: 2
+        }).format(Number(amount) || 0);
     }
 
     formatDate(dateString) {
-        const date = new Date(dateString);
+        const date = this.parseLocalDate(dateString);
         return date.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
         });
+    }
+
+    parseLocalDate(dateString) {
+        if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        return new Date(dateString);
     }
 
     generateId() {
