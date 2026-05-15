@@ -4823,6 +4823,7 @@ window.closeWeatherModal = closeWeatherModal;
 window.showTripTemplates = showTripTemplates;
 window.signOut = handleSignOut;
 window.toggleMobileMenu = toggleMobileMenu;
+window.toggleNavDropdown = toggleNavDropdown;
 window.showSearchSuggestions = function() {
     if (travelPlanner) travelPlanner.showSearchSuggestions();
 };
@@ -4834,6 +4835,31 @@ window.clearSearch = function() {
 };
 
 // Mobile menu toggle function
+function closeNavDropdowns(exceptGroup = null) {
+    document.querySelectorAll('.nav-group').forEach(group => {
+        if (exceptGroup && group === exceptGroup) return;
+        group.classList.remove('open');
+        const trigger = group.querySelector('.nav-menu-trigger');
+        if (trigger) {
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+
+function toggleNavDropdown(event, groupName) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const trigger = event.currentTarget;
+    const group = trigger.closest('.nav-group');
+    if (!group) return;
+
+    const isOpen = group.classList.contains('open');
+    closeNavDropdowns(group);
+    group.classList.toggle('open', !isOpen);
+    trigger.setAttribute('aria-expanded', String(!isOpen));
+}
+
 function toggleMobileMenu() {
     console.log('toggleMobileMenu called');
     const nav = document.getElementById('main-nav');
@@ -4866,13 +4892,8 @@ function toggleMobileMenu() {
 document.addEventListener('click', (e) => {
     const nav = document.getElementById('main-nav');
     const toggle = document.querySelector('.mobile-menu-toggle');
-    
-    document.querySelectorAll('.nav-menu-trigger').forEach(trigger => {
-        const group = trigger.closest('.nav-group');
-        if (group && !group.contains(e.target)) {
-            trigger.setAttribute('aria-expanded', 'false');
-        }
-    });
+
+    closeNavDropdowns(e.target.closest?.('.nav-group'));
 
     if (nav && toggle && nav.classList.contains('mobile-open')) {
         if (!nav.contains(e.target) && !toggle.contains(e.target)) {
@@ -4917,6 +4938,8 @@ function showSection(sectionName) {
                 icon.className = 'fas fa-bars';
             }
         }
+
+        closeNavDropdowns();
     } else {
         console.log('TravelPlanner not initialized yet');
     }

@@ -33,7 +33,7 @@
     <link rel="apple-touch-icon" sizes="96x96" href="/icons/icon-96x96.png?v=4">
     
     <!-- Stylesheets -->
-    <link rel="stylesheet" href="styles.css?v=17">
+    <link rel="stylesheet" href="styles.css?v=18">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -90,53 +90,71 @@
                         <span class="nav-text">Dashboard</span>
                     </button>
                     <div class="nav-group">
-                        <button class="nav-menu-trigger" type="button" data-group="plan" aria-haspopup="true" aria-expanded="false" aria-label="Open planning menu">
+                        <button class="nav-menu-trigger" type="button" data-group="plan" aria-haspopup="true" aria-expanded="false" aria-label="Open planning menu" onclick="toggleNavDropdown(event, 'plan')">
                             <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
                             <span class="nav-text">Plan</span>
                             <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="nav-dropdown" role="menu" aria-label="Planning tools">
                             <button class="nav-btn" data-section="trips" data-nav-group="plan" role="menuitem" aria-label="Go to My Trips" onclick="showSection('trips')">
-                                <i class="fas fa-map-marked-alt" aria-hidden="true"></i>
-                                <span class="nav-text">My Trips</span>
+                                <span class="dropdown-icon"><i class="fas fa-map-marked-alt" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">My Trips</span>
+                                    <span class="nav-hint">View and edit itineraries</span>
+                                </span>
                             </button>
                             <button class="nav-btn" data-section="calendar" data-nav-group="plan" role="menuitem" aria-label="Go to Calendar" onclick="showSection('calendar')">
-                                <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                                <span class="nav-text">Calendar</span>
+                                <span class="dropdown-icon"><i class="fas fa-calendar-alt" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">Calendar</span>
+                                    <span class="nav-hint">See trip dates by month</span>
+                                </span>
                             </button>
                         </div>
                     </div>
                     <div class="nav-group">
-                        <button class="nav-menu-trigger" type="button" data-group="manage" aria-haspopup="true" aria-expanded="false" aria-label="Open manage menu">
+                        <button class="nav-menu-trigger" type="button" data-group="manage" aria-haspopup="true" aria-expanded="false" aria-label="Open manage menu" onclick="toggleNavDropdown(event, 'manage')">
                             <i class="fas fa-briefcase" aria-hidden="true"></i>
                             <span class="nav-text">Manage</span>
                             <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="nav-dropdown" role="menu" aria-label="Management tools">
                             <button class="nav-btn" data-section="budget" data-nav-group="manage" role="menuitem" aria-label="Go to Budget" onclick="showSection('budget')">
-                                <i class="fas fa-calculator" aria-hidden="true"></i>
-                                <span class="nav-text">Budget</span>
+                                <span class="dropdown-icon"><i class="fas fa-calculator" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">Budget</span>
+                                    <span class="nav-hint">Track spend and totals</span>
+                                </span>
                             </button>
                             <button class="nav-btn" data-section="packing" data-nav-group="manage" role="menuitem" aria-label="Go to Packing Lists" onclick="showSection('packing')">
-                                <i class="fas fa-suitcase" aria-hidden="true"></i>
-                                <span class="nav-text">Packing</span>
+                                <span class="dropdown-icon"><i class="fas fa-suitcase" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">Packing</span>
+                                    <span class="nav-hint">Prepare trip checklists</span>
+                                </span>
                             </button>
                         </div>
                     </div>
                     <div class="nav-group">
-                        <button class="nav-menu-trigger" type="button" data-group="tools" aria-haspopup="true" aria-expanded="false" aria-label="Open travel tools menu">
+                        <button class="nav-menu-trigger" type="button" data-group="tools" aria-haspopup="true" aria-expanded="false" aria-label="Open travel tools menu" onclick="toggleNavDropdown(event, 'tools')">
                             <i class="fas fa-compass" aria-hidden="true"></i>
                             <span class="nav-text">Travel Tools</span>
                             <i class="fas fa-chevron-down nav-chevron" aria-hidden="true"></i>
                         </button>
                         <div class="nav-dropdown" role="menu" aria-label="Travel tools">
                             <button class="nav-btn" data-section="documents" data-nav-group="tools" role="menuitem" aria-label="Go to Documents" onclick="showSection('documents')">
-                                <i class="fas fa-file-alt" aria-hidden="true"></i>
-                                <span class="nav-text">Documents</span>
+                                <span class="dropdown-icon"><i class="fas fa-passport" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">Documents</span>
+                                    <span class="nav-hint">Store travel records</span>
+                                </span>
                             </button>
                             <button class="nav-btn" data-section="prices" data-nav-group="tools" role="menuitem" aria-label="Go to Travel Prices" onclick="showSection('prices')">
-                                <i class="fas fa-tags" aria-hidden="true"></i>
-                                <span class="nav-text">Prices</span>
+                                <span class="dropdown-icon"><i class="fas fa-tags" aria-hidden="true"></i></span>
+                                <span class="dropdown-copy">
+                                    <span class="nav-text">Prices</span>
+                                    <span class="nav-hint">Check travel price setup</span>
+                                </span>
                             </button>
                         </div>
                     </div>
