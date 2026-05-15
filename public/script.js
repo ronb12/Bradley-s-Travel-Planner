@@ -4353,7 +4353,7 @@ class TravelPlanner {
         const searchArea = document.getElementById('tp-search-area');
         if (!apiKey) {
             if (notice) notice.style.display = 'flex';
-            if (searchArea) searchArea.style.display = 'none';
+            if (searchArea) searchArea.style.display = 'block';
         } else {
             if (notice) notice.style.display = 'none';
             if (searchArea) searchArea.style.display = 'block';
@@ -4386,6 +4386,11 @@ class TravelPlanner {
         }
         if (!date) {
             this.showNotification('Please select a month', 'error'); return;
+        }
+
+        if (!token) {
+            this.renderFlightBookingHandoff(origin, destination, date, currency, resultsEl);
+            return;
         }
 
         resultsEl.innerHTML = '<div class="price-loading"><i class="fas fa-spinner fa-spin"></i> Searching flights…</div>';
@@ -4497,14 +4502,35 @@ class TravelPlanner {
                                 <span>${this.escapeHtml(f.airline)}</span>
                             </div>` : ''}
                         </div>
-                        <a href="https://www.aviasales.com/search/${this.escapeHtml(origin)}${(f.depart_date||'').replace(/-/g,'').slice(2)}${this.escapeHtml(destination)}1"
+                        <a href="${this.buildFlightBookingUrl(origin, destination, f.depart_date || '')}"
                            target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
-                            Book <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                            Continue to Checkout <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                         </a>
                     </div>
                 `).join('')}
             </div>
             <p class="price-attribution">Prices from <a href="https://travelpayouts.com" target="_blank" rel="noopener">TravelPayouts</a> · May vary at booking</p>
+        `;
+    }
+
+    renderFlightBookingHandoff(origin, destination, date, currency, container) {
+        const bookingUrl = this.buildFlightBookingUrl(origin, destination, `${date}-01`);
+        container.innerHTML = `
+            <div class="booking-handoff-card">
+                <div class="booking-handoff-icon"><i class="fas fa-plane-departure" aria-hidden="true"></i></div>
+                <div class="booking-handoff-copy">
+                    <h3>${this.escapeHtml(origin)} to ${this.escapeHtml(destination)}</h3>
+                    <p>Live fare search needs a TravelPayouts key, but users can still continue to a flight provider to compare current fares and pay securely there.</p>
+                    <div class="booking-meta">
+                        <span><i class="fas fa-calendar" aria-hidden="true"></i> ${this.escapeHtml(date)}</span>
+                        <span><i class="fas fa-money-bill" aria-hidden="true"></i> ${this.escapeHtml(currency)}</span>
+                    </div>
+                </div>
+                <a href="${bookingUrl}" target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                    Search & Pay with Provider <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                </a>
+            </div>
+            <p class="price-attribution">Provider checkout opens in a new tab. Prices, availability, and payment are handled by the travel provider.</p>
         `;
     }
 
@@ -4521,6 +4547,11 @@ class TravelPlanner {
         if (!checkIn)  { this.showNotification('Select a check-in date', 'error'); return; }
         if (!checkOut) { this.showNotification('Select a check-out date', 'error'); return; }
         if (checkOut <= checkIn) { this.showNotification('Check-out must be after check-in', 'error'); return; }
+
+        if (!token) {
+            this.renderHotelBookingHandoff(location, checkIn, checkOut, adults, currency, resultsEl);
+            return;
+        }
 
         resultsEl.innerHTML = '<div class="price-loading"><i class="fas fa-spinner fa-spin"></i> Searching hotels…</div>';
 
@@ -4540,7 +4571,7 @@ class TravelPlanner {
             if (res.status === 503)  throw new Error('No cached hotel data for this location and dates. Try different dates or a major city like "Paris" or "New York".');
             if (!res.ok) throw new Error(`API error ${res.status}`);
             const data = await res.json();
-            this.renderHotelResults(data, location, checkIn, checkOut, currency, resultsEl);
+            this.renderHotelResults(data, location, checkIn, checkOut, adults, currency, resultsEl);
         } catch (err) {
             console.error('Hotel search error:', err);
             const isCors = err instanceof TypeError && err.message.toLowerCase().includes('fetch');
@@ -4553,7 +4584,7 @@ class TravelPlanner {
         }
     }
 
-    renderHotelResults(hotels, location, checkIn, checkOut, currency, container) {
+    renderHotelResults(hotels, location, checkIn, checkOut, adults, currency, container) {
         if (!hotels || hotels.length === 0) {
             container.innerHTML = '<div class="price-empty"><i class="fas fa-hotel"></i><p>No hotels found for this location and dates.</p></div>';
             return;
@@ -4598,15 +4629,155 @@ class TravelPlanner {
                                 <span>Total: ${symbol}${h.priceFrom.toLocaleString()} for ${nights} night${nights !== 1 ? 's' : ''}</span>
                             </div>` : ''}
                         </div>
-                        <a href="https://www.hotellook.com/hotels?destination=${encodeURIComponent(location)}&checkIn=${this.escapeHtml(checkIn)}&checkOut=${this.escapeHtml(checkOut)}&adults=${adults}"
+                        <a href="${this.buildHotelBookingUrl(location, checkIn, checkOut, adults)}"
                            target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
-                            Book <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                            Continue to Checkout <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                         </a>
                     </div>`;
                 }).join('')}
             </div>
             <p class="price-attribution">Prices from <a href="https://hotellook.com" target="_blank" rel="noopener">Hotellook / TravelPayouts</a> · May vary at booking</p>
         `;
+    }
+
+    renderHotelBookingHandoff(location, checkIn, checkOut, adults, currency, container) {
+        const bookingUrl = this.buildHotelBookingUrl(location, checkIn, checkOut, adults);
+        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / 86400000);
+        container.innerHTML = `
+            <div class="booking-handoff-card">
+                <div class="booking-handoff-icon"><i class="fas fa-hotel" aria-hidden="true"></i></div>
+                <div class="booking-handoff-copy">
+                    <h3>Hotels in ${this.escapeHtml(location)}</h3>
+                    <p>Continue to a hotel provider to compare live availability, choose a room, and pay securely through the provider checkout.</p>
+                    <div class="booking-meta">
+                        <span><i class="fas fa-calendar-check" aria-hidden="true"></i> ${this.escapeHtml(checkIn)} to ${this.escapeHtml(checkOut)}</span>
+                        <span><i class="fas fa-moon" aria-hidden="true"></i> ${nights} night${nights !== 1 ? 's' : ''}</span>
+                        <span><i class="fas fa-user" aria-hidden="true"></i> ${this.escapeHtml(adults)} adult${String(adults) !== '1' ? 's' : ''}</span>
+                        <span><i class="fas fa-money-bill" aria-hidden="true"></i> ${this.escapeHtml(currency)}</span>
+                    </div>
+                </div>
+                <a href="${bookingUrl}" target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                    Search & Pay with Provider <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                </a>
+            </div>
+            <p class="price-attribution">Provider checkout opens in a new tab. Prices, availability, and payment are handled by the travel provider.</p>
+        `;
+    }
+
+    searchCars() {
+        const location = (document.getElementById('car-location')?.value || '').trim();
+        const pickup = document.getElementById('car-pickup')?.value || '';
+        const returnDate = document.getElementById('car-return')?.value || '';
+        const carType = document.getElementById('car-type')?.value || 'economy';
+        const resultsEl = document.getElementById('car-results');
+
+        if (!location) { this.showNotification('Enter a pickup location', 'error'); return; }
+        if (!pickup) { this.showNotification('Select a pickup date', 'error'); return; }
+        if (!returnDate) { this.showNotification('Select a return date', 'error'); return; }
+        if (returnDate <= pickup) { this.showNotification('Return date must be after pickup date', 'error'); return; }
+
+        const bookingUrl = this.buildCarBookingUrl(location, pickup, returnDate, carType);
+        resultsEl.innerHTML = `
+            <div class="price-results-header">
+                <h3><i class="fas fa-car" aria-hidden="true"></i>
+                    Rental cars near ${this.escapeHtml(location)}
+                    <span class="results-count">Provider checkout</span>
+                </h3>
+            </div>
+            <div class="booking-handoff-card">
+                <div class="booking-handoff-icon"><i class="fas fa-car-side" aria-hidden="true"></i></div>
+                <div class="booking-handoff-copy">
+                    <h3>${this.toTitleCase(carType)} rental car</h3>
+                    <p>Compare current rental car inventory, choose add-ons, and pay securely with the rental provider.</p>
+                    <div class="booking-meta">
+                        <span><i class="fas fa-location-dot" aria-hidden="true"></i> ${this.escapeHtml(location)}</span>
+                        <span><i class="fas fa-calendar-check" aria-hidden="true"></i> ${this.escapeHtml(pickup)}</span>
+                        <span><i class="fas fa-calendar-times" aria-hidden="true"></i> ${this.escapeHtml(returnDate)}</span>
+                    </div>
+                </div>
+                <a href="${bookingUrl}" target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                    Search & Pay with Provider <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                </a>
+            </div>
+            <p class="price-attribution">Rental checkout opens in a new tab. Pricing, deposits, insurance, and payment are handled by the rental provider.</p>
+        `;
+    }
+
+    searchCruises() {
+        const destination = document.getElementById('cruise-destination')?.value || 'caribbean';
+        const month = document.getElementById('cruise-month')?.value || '';
+        const nights = document.getElementById('cruise-nights')?.value || '3-5';
+        const guests = document.getElementById('cruise-guests')?.value || '2';
+        const resultsEl = document.getElementById('cruise-results');
+
+        if (!month) { this.showNotification('Select a sailing month', 'error'); return; }
+
+        const bookingUrl = this.buildCruiseBookingUrl(destination, month, nights, guests);
+        resultsEl.innerHTML = `
+            <div class="price-results-header">
+                <h3><i class="fas fa-ship" aria-hidden="true"></i>
+                    ${this.toTitleCase(destination)} cruises
+                    <span class="results-count">Provider checkout</span>
+                </h3>
+            </div>
+            <div class="booking-handoff-card">
+                <div class="booking-handoff-icon"><i class="fas fa-ship" aria-hidden="true"></i></div>
+                <div class="booking-handoff-copy">
+                    <h3>${this.toTitleCase(destination)} cruise search</h3>
+                    <p>Compare sailing dates, cabin types, packages, taxes/fees, and pay securely with the cruise provider or agency.</p>
+                    <div class="booking-meta">
+                        <span><i class="fas fa-calendar" aria-hidden="true"></i> ${this.escapeHtml(month)}</span>
+                        <span><i class="fas fa-moon" aria-hidden="true"></i> ${this.escapeHtml(nights)} nights</span>
+                        <span><i class="fas fa-users" aria-hidden="true"></i> ${this.escapeHtml(guests)} guest${String(guests) !== '1' ? 's' : ''}</span>
+                    </div>
+                </div>
+                <a href="${bookingUrl}" target="_blank" rel="noopener" class="btn btn-primary price-book-btn">
+                    Search & Pay with Provider <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+                </a>
+            </div>
+            <p class="price-attribution">Cruise checkout opens in a new tab. Cabin pricing, taxes, fees, and payment are handled by the cruise provider.</p>
+        `;
+    }
+
+    buildFlightBookingUrl(origin, destination, departDate = '') {
+        const datePart = departDate ? departDate.replace(/-/g, '').slice(2) : '';
+        return `https://www.aviasales.com/search/${encodeURIComponent(origin)}${datePart}${encodeURIComponent(destination)}1`;
+    }
+
+    buildHotelBookingUrl(location, checkIn, checkOut, adults) {
+        const params = new URLSearchParams({
+            destination: location,
+            checkIn,
+            checkOut,
+            adults: String(adults)
+        });
+        return `https://www.hotellook.com/hotels?${params.toString()}`;
+    }
+
+    buildCarBookingUrl(location, pickup, returnDate, carType) {
+        const params = new URLSearchParams({
+            pickup: location,
+            pickupdate: pickup,
+            dropoffdate: returnDate,
+            carclass: carType
+        });
+        return `https://www.expedia.com/carsearch?${params.toString()}`;
+    }
+
+    buildCruiseBookingUrl(destination, month, nights, guests) {
+        const params = new URLSearchParams({
+            destination,
+            sailing_month: month,
+            duration: nights,
+            travelers: String(guests)
+        });
+        return `https://www.expedia.com/Cruises?${params.toString()}`;
+    }
+
+    toTitleCase(value) {
+        return String(value || '')
+            .replace(/[-_]+/g, ' ')
+            .replace(/\w\S*/g, word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
     }
 }
 

@@ -149,11 +149,11 @@
                                     <span class="nav-hint">Store travel records</span>
                                 </span>
                             </button>
-                            <button class="nav-btn" data-section="prices" data-nav-group="tools" role="menuitem" aria-label="Go to Travel Prices" onclick="showSection('prices')">
+                            <button class="nav-btn" data-section="prices" data-nav-group="tools" role="menuitem" aria-label="Go to Book Travel" onclick="showSection('prices')">
                                 <span class="dropdown-icon"><i class="fas fa-tags" aria-hidden="true"></i></span>
                                 <span class="dropdown-copy">
-                                    <span class="nav-text">Prices</span>
-                                    <span class="nav-hint">Check travel price setup</span>
+                                    <span class="nav-text">Book Travel</span>
+                                    <span class="nav-hint">Flights, hotels, cars, cruises</span>
                                 </span>
                             </button>
                         </div>
@@ -374,16 +374,16 @@
             <!-- Travel Prices Section -->
             <section id="prices" class="content-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-tags" aria-hidden="true"></i> Travel Prices</h2>
-                    <p>Search live flight and hotel prices powered by TravelPayouts</p>
+                    <h2><i class="fas fa-tags" aria-hidden="true"></i> Book Travel</h2>
+                    <p>Search and continue to provider checkout for flights, hotels, rental cars, and cruises.</p>
                 </div>
 
                 <!-- Setup notice (shown when no API key) -->
                 <div id="tp-setup-notice" class="tp-notice" style="display:none">
                     <div class="tp-notice-content">
                         <i class="fas fa-key" aria-hidden="true"></i>
-                        <h3>API Key Required</h3>
-                        <p>Add your free TravelPayouts API key in Settings to search live prices.</p>
+                        <h3>Live Price Key Optional</h3>
+                        <p>Add your free TravelPayouts API key in Settings for live cached flight and hotel prices. Booking handoff links still work without a key.</p>
                         <a href="https://www.travelpayouts.com/programs/100/tools/api" target="_blank" rel="noopener" class="btn btn-secondary">
                             <i class="fas fa-external-link-alt" aria-hidden="true"></i> Get Free API Key
                         </a>
@@ -393,7 +393,12 @@
                     </div>
                 </div>
 
-                <!-- Search area (shown when API key exists) -->
+                <div class="booking-disclaimer">
+                    <i class="fas fa-circle-info" aria-hidden="true"></i>
+                    <p>Bookings and payments are completed securely by the selected travel provider. Bradley's Travel Planner does not collect card details or issue tickets directly.</p>
+                </div>
+
+                <!-- Search area -->
                 <div id="tp-search-area">
                     <!-- Tabs -->
                     <div class="price-tabs" role="tablist">
@@ -404,6 +409,14 @@
                         <button class="price-tab" role="tab" aria-selected="false" data-tab="hotels"
                                 onclick="travelPlanner.switchPriceTab('hotels')">
                             <i class="fas fa-hotel" aria-hidden="true"></i> Hotels
+                        </button>
+                        <button class="price-tab" role="tab" aria-selected="false" data-tab="cars"
+                                onclick="travelPlanner.switchPriceTab('cars')">
+                            <i class="fas fa-car" aria-hidden="true"></i> Cars
+                        </button>
+                        <button class="price-tab" role="tab" aria-selected="false" data-tab="cruises"
+                                onclick="travelPlanner.switchPriceTab('cruises')">
+                            <i class="fas fa-ship" aria-hidden="true"></i> Cruises
                         </button>
                     </div>
 
@@ -492,6 +505,105 @@
                             </button>
                         </div>
                         <div id="hotel-results" class="price-results" role="region" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Car Rental Search -->
+                    <div id="cars-search-panel" class="price-panel" role="tabpanel">
+                        <div class="price-search-card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="car-location">Pickup Location</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-location-dot" aria-hidden="true"></i>
+                                        <input type="text" id="car-location" placeholder="e.g. Orlando Airport" autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="car-pickup">Pickup Date</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+                                        <input type="date" id="car-pickup">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="car-return">Return Date</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar-times" aria-hidden="true"></i>
+                                        <input type="date" id="car-return">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="car-type">Car Type</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-car-side" aria-hidden="true"></i>
+                                        <select id="car-type">
+                                            <option value="economy">Economy</option>
+                                            <option value="compact">Compact</option>
+                                            <option value="midsize">Midsize</option>
+                                            <option value="suv">SUV</option>
+                                            <option value="luxury">Luxury</option>
+                                            <option value="minivan">Minivan</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="travelPlanner.searchCars()">
+                                <i class="fas fa-search" aria-hidden="true"></i> Search Rental Cars
+                            </button>
+                        </div>
+                        <div id="car-results" class="price-results" role="region" aria-live="polite"></div>
+                    </div>
+
+                    <!-- Cruise Search -->
+                    <div id="cruises-search-panel" class="price-panel" role="tabpanel">
+                        <div class="price-search-card">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cruise-destination">Cruise Destination</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-water" aria-hidden="true"></i>
+                                        <select id="cruise-destination">
+                                            <option value="caribbean">Caribbean</option>
+                                            <option value="bahamas">Bahamas</option>
+                                            <option value="alaska">Alaska</option>
+                                            <option value="mexico">Mexico</option>
+                                            <option value="mediterranean">Mediterranean</option>
+                                            <option value="europe">Europe</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cruise-month">Sailing Month</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-calendar" aria-hidden="true"></i>
+                                        <input type="month" id="cruise-month">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cruise-nights">Trip Length</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-moon" aria-hidden="true"></i>
+                                        <select id="cruise-nights">
+                                            <option value="3-5">3-5 nights</option>
+                                            <option value="6-9">6-9 nights</option>
+                                            <option value="10-14">10-14 nights</option>
+                                            <option value="15+">15+ nights</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cruise-guests">Guests</label>
+                                    <div class="input-group">
+                                        <i class="fas fa-users" aria-hidden="true"></i>
+                                        <input type="number" id="cruise-guests" value="2" min="1" max="8">
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" onclick="travelPlanner.searchCruises()">
+                                <i class="fas fa-search" aria-hidden="true"></i> Search Cruises
+                            </button>
+                        </div>
+                        <div id="cruise-results" class="price-results" role="region" aria-live="polite"></div>
                     </div>
                 </div>
             </section>
@@ -895,6 +1007,6 @@
 
     <script type="module" src="firebase-config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script type="module" src="script.js?v=16"></script>
+    <script type="module" src="script.js?v=17"></script>
 </body>
 </html>

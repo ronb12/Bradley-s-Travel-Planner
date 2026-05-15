@@ -4650,6 +4650,28 @@ mark {
     margin: 0.25rem;
 }
 
+.booking-disclaimer {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(102, 126, 234, 0.16);
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(240, 147, 251, 0.08));
+    color: #475569;
+}
+
+.booking-disclaimer i {
+    color: #667eea;
+    margin-top: 0.2rem;
+}
+
+.booking-disclaimer p {
+    margin: 0;
+    line-height: 1.5;
+}
+
 /* Tabs */
 .price-tabs {
     display: flex;
@@ -4657,6 +4679,7 @@ mark {
     margin-bottom: 1.5rem;
     border-bottom: 2px solid #e2e8f0;
     padding-bottom: 0;
+    flex-wrap: wrap;
 }
 
 .price-tab {
@@ -4837,6 +4860,78 @@ mark {
 }
 
 .price-attribution a { color: #667eea; }
+
+.booking-handoff-card {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.2rem;
+    padding: 1.35rem;
+    border: 1px solid rgba(102, 126, 234, 0.16);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 92% 10%, rgba(240, 147, 251, 0.16), transparent 28%),
+        linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.12);
+}
+
+.booking-handoff-icon {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    place-items: center;
+    border-radius: 18px;
+    color: white;
+    background: linear-gradient(135deg, #667eea, #f093fb);
+    font-size: 1.45rem;
+    box-shadow: 0 12px 25px rgba(102, 126, 234, 0.25);
+}
+
+.booking-handoff-copy h3 {
+    margin: 0 0 0.35rem;
+    color: #1e293b;
+    font-size: 1.15rem;
+}
+
+.booking-handoff-copy p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+.booking-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-top: 0.85rem;
+}
+
+.booking-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.34rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(102, 126, 234, 0.09);
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+@media (max-width: 760px) {
+    .booking-handoff-card {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    .booking-handoff-icon {
+        margin: 0 auto;
+    }
+
+    .booking-meta {
+        justify-content: center;
+    }
+}
 
 /* Settings: API integration block */
 .setting-item--col {
