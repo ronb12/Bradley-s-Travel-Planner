@@ -4940,6 +4940,9 @@ function showSection(sectionName) {
         }
 
         closeNavDropdowns();
+        if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+        }
     } else {
         console.log('TravelPlanner not initialized yet');
     }
