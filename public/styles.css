@@ -590,6 +590,14 @@ body {
     font-size: 1.1rem;
 }
 
+.section-header.dashboard-hero h2 {
+    color: white;
+}
+
+.section-header.dashboard-hero p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
 .section-header .btn {
     margin-top: 1rem;
 }
