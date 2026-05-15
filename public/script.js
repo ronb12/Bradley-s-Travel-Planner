@@ -4373,12 +4373,20 @@ class TravelPlanner {
     }
 
     switchPriceTab(tab) {
+        const panelIds = {
+            flights: 'flight-search-panel',
+            hotels: 'hotel-search-panel',
+            cars: 'cars-search-panel',
+            cruises: 'cruises-search-panel',
+            'live-listings': 'live-listings-search-panel'
+        };
+        const activePanelId = panelIds[tab] || `${tab}-search-panel`;
         document.querySelectorAll('.price-tab').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tab);
             btn.setAttribute('aria-selected', btn.dataset.tab === tab ? 'true' : 'false');
         });
         document.querySelectorAll('.price-panel').forEach(panel => {
-            panel.classList.toggle('active', panel.id === `${tab}-search-panel`);
+            panel.classList.toggle('active', panel.id === activePanelId);
         });
     }
 
